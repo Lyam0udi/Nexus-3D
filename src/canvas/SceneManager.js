@@ -1,5 +1,10 @@
 import * as THREE from 'three';
 import { ModelLoader } from './ModelLoader.js';
+import { BASE_DISTORTION } from './shaders/LiquidShader.js';
+
+const MOUSE_LERP = 0.05;
+const TILT_STRENGTH = 0.28;
+const VELOCITY_TO_DISTORTION = 1.8;
 
 /**
  * Production-grade WebGL renderer, camera, and delta-time animation loop.
@@ -15,6 +20,17 @@ export class SceneManager {
     this._disposed = false;
     this.sculpture = null;
     this.modelLoader = null;
+
+    /** Normalized cursor target (−1…+1), updated on pointer move. */
+    this._mouseTarget = new THREE.Vector2(0, 0);
+    /** Smoothed cursor with rotational inertia (lerp 0.05). */
+    this._mouseSmooth = new THREE.Vector2(0, 0);
+    this._prevMouseTarget = new THREE.Vector2(0, 0);
+    this._mouseVelocity = 0;
+    this._smoothVelocity = 0;
+    this._tilt = new THREE.Vector2(0, 0);
+    this._tiltTarget = new THREE.Vector2(0, 0);
+    this._spin = { x: 0, y: 0 };
 
     this.scene = new THREE.Scene();
 
@@ -39,12 +55,29 @@ export class SceneManager {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     this._onResize = this._onResize.bind(this);
-    window.addEventListener('resize', this._onResize);
-
+    this._onPointerMove = this._onPointerMove.bind(this);
     this._animate = this._animate.bind(this);
-    this._animate();
 
+    window.addEventListener('resize', this._onResize);
+    window.addEventListener('pointermove', this._onPointerMove, { passive: true });
+
+    this._animate();
     this._mountSculpture();
+  }
+
+  /**
+   * Track normalized mouse coordinates (−1…+1) and instantaneous sweep speed.
+   * @param {PointerEvent} event
+   */
+  _onPointerMove(event) {
+    const x = (event.clientX / window.innerWidth) * 2 - 1;
+    const y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    const dx = x - this._prevMouseTarget.x;
+    const dy = y - this._prevMouseTarget.y;
+    this._mouseVelocity = Math.min(Math.hypot(dx, dy) * 12, 2.5);
+    this._prevMouseTarget.set(x, y);
+    this._mouseTarget.set(x, y);
   }
 
   /**
@@ -81,10 +114,33 @@ export class SceneManager {
     this._rafId = requestAnimationFrame(this._animate);
 
     const delta = this.clock.getDelta();
+    const elapsed = this.clock.getElapsedTime();
+
+    // Cursor inertia — damp toward target at 0.05
+    this._mouseSmooth.lerp(this._mouseTarget, MOUSE_LERP);
+    this._smoothVelocity += (this._mouseVelocity - this._smoothVelocity) * MOUSE_LERP;
+    this._mouseVelocity *= 0.92;
+
+    this._tiltTarget.set(
+      this._mouseSmooth.y * TILT_STRENGTH,
+      this._mouseSmooth.x * TILT_STRENGTH,
+    );
+    this._tilt.lerp(this._tiltTarget, MOUSE_LERP);
+
+    const uniforms = this.modelLoader?.liquidUniforms;
+    if (uniforms) {
+      uniforms.uTime.value = elapsed;
+      uniforms.uMouse.value.copy(this._mouseSmooth);
+      uniforms.uMouseVelocity.value = this._smoothVelocity;
+      uniforms.uDistortion.value =
+        BASE_DISTORTION + this._smoothVelocity * VELOCITY_TO_DISTORTION;
+    }
 
     if (this.sculpture) {
-      this.sculpture.rotation.x += delta * 0.12;
-      this.sculpture.rotation.y += delta * 0.22;
+      this._spin.x += delta * 0.12;
+      this._spin.y += delta * 0.22;
+      this.sculpture.rotation.x = this._spin.x + this._tilt.x;
+      this.sculpture.rotation.y = this._spin.y + this._tilt.y;
     }
 
     this.renderer.render(this.scene, this.camera);
@@ -100,6 +156,7 @@ export class SceneManager {
     }
 
     window.removeEventListener('resize', this._onResize);
+    window.removeEventListener('pointermove', this._onPointerMove);
 
     if (this.modelLoader) {
       this.modelLoader.dispose();

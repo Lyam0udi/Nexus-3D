@@ -1,5 +1,10 @@
 import * as THREE from 'three';
 import { GLTFLoader, RGBELoader } from 'three-stdlib';
+import {
+  applyLiquidShader,
+  createLiquidUniforms,
+  loadNoiseMap,
+} from './shaders/LiquidShader.js';
 
 const HDRI_PATH = '/assets/studio.hdr';
 const MODEL_PATH = '/assets/core.glb';
@@ -35,6 +40,8 @@ export class ModelLoader {
     this.renderer = renderer;
     this.sculpture = null;
     this._envMap = null;
+    this._noiseMap = null;
+    this.liquidUniforms = createLiquidUniforms();
     this._pmrem = new THREE.PMREMGenerator(renderer);
     this._pmrem.compileEquirectangularShader();
   }
@@ -45,6 +52,7 @@ export class ModelLoader {
    */
   async load() {
     await this._loadEnvironment();
+    await this._loadLiquidNoise();
     this._setupLights();
     this.sculpture = await this._loadSculpture();
     this.sculpture.position.set(0, 0, 0);
@@ -52,9 +60,20 @@ export class ModelLoader {
     return this.sculpture;
   }
 
+  async _loadLiquidNoise() {
+    try {
+      this._noiseMap = await loadNoiseMap();
+      this.liquidUniforms.uNoiseMap.value = this._noiseMap;
+    } catch (err) {
+      console.warn('[ModelLoader] noise.png load failed; liquid grain disabled.', err);
+    }
+  }
+
   /** @returns {THREE.MeshPhysicalMaterial} */
   createPhysicalMaterial() {
-    return new THREE.MeshPhysicalMaterial({ ...PHYSICAL_MATERIAL });
+    const material = new THREE.MeshPhysicalMaterial({ ...PHYSICAL_MATERIAL });
+    applyLiquidShader(material, this.liquidUniforms);
+    return material;
   }
 
   async _loadEnvironment() {
@@ -162,6 +181,13 @@ export class ModelLoader {
     if (this._envMap) {
       this._envMap.dispose();
       this._envMap = null;
+    }
+    if (this._noiseMap) {
+      this._noiseMap.dispose();
+      this._noiseMap = null;
+    }
+    if (this.liquidUniforms) {
+      this.liquidUniforms.uNoiseMap.value = null;
     }
     if (this.scene) {
       this.scene.environment = null;
