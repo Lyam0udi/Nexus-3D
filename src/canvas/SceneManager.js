@@ -21,6 +21,13 @@ export class SceneManager {
     this._disposed = false;
     this.sculpture = null;
     this.modelLoader = null;
+    /** @type {import('../animations/ScrollController.js').ScrollController | null} */
+    this.scrollController = null;
+
+    /** Scroll-driven mesh yaw (radians) composed on top of idle spin + tilt. */
+    this.scrollMeshRotation = { x: 0, y: 0 };
+    /** Extra liquid distortion from Act-3 scroll surge. */
+    this.scrollDistortionBoost = 0;
 
     /** Normalized cursor target (−1…+1), updated on pointer move. */
     this._mouseTarget = new THREE.Vector2(0, 0);
@@ -41,7 +48,9 @@ export class SceneManager {
       0.1,
       1000,
     );
-    this.camera.position.set(0, 0, 8);
+    // Act-1 macro start; ScrollController continues the 4-act path from here
+    this.camera.position.set(0, 0, 4);
+    this.camera.lookAt(0, 0, 0);
 
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
@@ -117,6 +126,9 @@ export class SceneManager {
 
     this._rafId = requestAnimationFrame(this._animate);
 
+    const timeMs = performance.now();
+    this.scrollController?.raf(timeMs);
+
     const delta = this.clock.getDelta();
     const elapsed = this.clock.getElapsedTime();
 
@@ -137,17 +149,29 @@ export class SceneManager {
       uniforms.uMouse.value.copy(this._mouseSmooth);
       uniforms.uMouseVelocity.value = this._smoothVelocity;
       uniforms.uDistortion.value =
-        BASE_DISTORTION + this._smoothVelocity * VELOCITY_TO_DISTORTION;
+        BASE_DISTORTION +
+        this.scrollDistortionBoost +
+        this._smoothVelocity * VELOCITY_TO_DISTORTION;
     }
 
     if (this.sculpture) {
       this._spin.x += delta * 0.12;
       this._spin.y += delta * 0.22;
-      this.sculpture.rotation.x = this._spin.x + this._tilt.x;
-      this.sculpture.rotation.y = this._spin.y + this._tilt.y;
+      this.sculpture.rotation.x =
+        this._spin.x + this._tilt.x + this.scrollMeshRotation.x;
+      this.sculpture.rotation.y =
+        this._spin.y + this._tilt.y + this.scrollMeshRotation.y;
     }
 
     this.postProcessing.render();
+  }
+
+  /**
+   * Attach Lenis / ScrollTrigger choreography (driven from the shared RAF).
+   * @param {import('../animations/ScrollController.js').ScrollController} controller
+   */
+  setScrollController(controller) {
+    this.scrollController = controller;
   }
 
   /** Tear down geometry, materials, listeners, and the renderer. */
@@ -157,6 +181,11 @@ export class SceneManager {
     if (this._rafId !== null) {
       cancelAnimationFrame(this._rafId);
       this._rafId = null;
+    }
+
+    if (this.scrollController) {
+      this.scrollController.destroy();
+      this.scrollController = null;
     }
 
     window.removeEventListener('resize', this._onResize);
