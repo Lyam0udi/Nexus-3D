@@ -4,33 +4,158 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NEXUS // 3D</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <canvas id="webgl-canvas" class="webgl-canvas"></canvas>
 
     <div id="app">
-      <section id="act-1" class="act">
-        <div class="act__content glass">
-          <h1 class="act__headline">NEXUS // 3D</h1>
-          <p class="act__subhead">Continuous WebGL Engine</p>
+      <!-- ═══ ACT 1 — Hero ═══ -->
+      <section id="act-1" class="act act--hero" aria-label="Hero">
+        <header class="site-header">
+          <a href="#act-1" class="site-logo interactive">NEXUS</a>
+          <nav class="site-nav" aria-label="Primary">
+            <a href="#act-2" class="interactive">Features</a>
+            <a href="#act-3" class="interactive">Architecture</a>
+            <a href="#act-4" class="interactive">Terminal</a>
+          </nav>
+          <span class="status-pill interactive" id="webgl-status" role="status">
+            <span class="status-pill__dot" aria-hidden="true"></span>
+            <span class="status-pill__label">WebGL · LIVE</span>
+          </span>
+        </header>
+
+        <div class="act__content act__content--hero">
+          <p class="eyebrow mono">SCROLL-DRIVEN EXPERIENCE</p>
+          <h1 class="display-headline">NEXUS // 3D</h1>
+          <p class="hero-lede">
+            A liquid-glass sculpture choreographed by scroll — four acts, one continuous WebGL engine.
+          </p>
+        </div>
+
+        <div class="scroll-indicator" aria-hidden="true">
+          <span class="scroll-indicator__label mono">Scroll</span>
+          <span class="scroll-indicator__line"></span>
         </div>
       </section>
 
-      <section id="act-2" class="act">
-        <div class="act__content glass">
-          <h2 class="act__headline">Act II</h2>
+      <!-- ═══ ACT 2 — Features ═══ -->
+      <section id="act-2" class="act act--features" aria-label="Features">
+        <div class="act__inner">
+          <header class="section-header">
+            <p class="eyebrow mono">01 — FEATURES</p>
+            <h2 class="section-title">Optical systems</h2>
+            <p class="section-lede">Three surfaces. One continuous light path.</p>
+          </header>
+
+          <div class="glass-grid">
+            <article class="glass-card interactive" data-tilt tabindex="0">
+              <span class="glass-card__index mono">01</span>
+              <h3 class="glass-card__title">Physical Materials</h3>
+              <p class="glass-card__body">
+                MeshPhysicalMaterial with transmission, IOR, and reflectivity tuned for liquid glass.
+              </p>
+            </article>
+
+            <article class="glass-card interactive" data-tilt tabindex="0">
+              <span class="glass-card__index mono">02</span>
+              <h3 class="glass-card__title">Scroll Orbit</h3>
+              <p class="glass-card__body">
+                A 120° camera sweep locked to Lenis momentum and a master GSAP ScrollTrigger timeline.
+              </p>
+            </article>
+
+            <article class="glass-card interactive" data-tilt tabindex="0">
+              <span class="glass-card__index mono">03</span>
+              <h3 class="glass-card__title">Noise Warp</h3>
+              <p class="glass-card__body">
+                Custom GLSL displacement that surges as the camera dives into the mesh core.
+              </p>
+            </article>
+          </div>
         </div>
       </section>
 
-      <section id="act-3" class="act">
-        <div class="act__content glass">
-          <h2 class="act__headline">Act III</h2>
+      <!-- ═══ ACT 3 — Architecture ═══ -->
+      <section id="act-3" class="act act--architecture" aria-label="Architecture">
+        <div class="act__inner">
+          <header class="section-header">
+            <p class="eyebrow mono">02 — ARCHITECTURE</p>
+            <h2 class="section-title">Signal readout</h2>
+            <p class="section-lede">Live metrics from the render pipeline.</p>
+          </header>
+
+          <div class="metrics-panel glass" id="metrics-panel">
+            <div class="metric" data-metric data-target="60" data-suffix=" fps">
+              <span class="metric__value mono"><span class="metric__num">0</span><span class="metric__suffix"> fps</span></span>
+              <span class="metric__label">Target Frame Rate</span>
+            </div>
+            <div class="metric" data-metric data-target="2" data-suffix="×">
+              <span class="metric__value mono"><span class="metric__num">0</span><span class="metric__suffix">×</span></span>
+              <span class="metric__label">Pixel Ratio Cap</span>
+            </div>
+            <div class="metric" data-metric data-target="4" data-suffix="">
+              <span class="metric__value mono"><span class="metric__num">0</span><span class="metric__suffix"></span></span>
+              <span class="metric__label">Scroll Acts</span>
+            </div>
+            <div class="metric" data-metric data-target="92" data-suffix="%">
+              <span class="metric__value mono"><span class="metric__num">0</span><span class="metric__suffix">%</span></span>
+              <span class="metric__label">Transmission</span>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section id="act-4" class="act">
-        <div class="act__content glass">
-          <h2 class="act__headline">Act IV</h2>
+      <!-- ═══ ACT 4 — Terminal / CTA ═══ -->
+      <section id="act-4" class="act act--terminal" aria-label="Terminal">
+        <div class="act__inner act__inner--terminal">
+          <div class="terminal glass">
+            <div class="terminal__chrome">
+              <span class="terminal__dots" aria-hidden="true">
+                <i></i><i></i><i></i>
+              </span>
+              <span class="terminal__title mono">nexus@core — zsh</span>
+            </div>
+            <div class="terminal__body">
+              <p class="terminal__line mono">
+                <span class="terminal__prompt">›</span> nexus init --experience scroll
+              </p>
+              <p class="terminal__line mono terminal__line--dim">
+                Engine online. Four acts locked. Awaiting input.
+              </p>
+              <p class="terminal__cta-label mono">Ready to dive through the core?</p>
+              <div class="terminal__actions">
+                <a
+                  class="btn btn--primary interactive"
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  View Repository
+                </a>
+                <a class="btn btn--ghost interactive" href="#act-1">Restart Sequence</a>
+              </div>
+            </div>
+            <footer class="terminal__footer">
+              <ul class="social-links">
+                <li>
+                  <a class="interactive" href="https://github.com" target="_blank" rel="noopener noreferrer">GitHub</a>
+                </li>
+                <li>
+                  <a class="interactive" href="https://x.com" target="_blank" rel="noopener noreferrer">X</a>
+                </li>
+                <li>
+                  <a class="interactive" href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                </li>
+              </ul>
+              <p class="repo-meta mono">nexus-3d · vite · three.js · gsap · lenis</p>
+            </footer>
+          </div>
         </div>
       </section>
     </div>
