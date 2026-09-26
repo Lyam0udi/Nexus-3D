@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { ModelLoader } from './ModelLoader.js';
+import { PostProcessing } from './PostProcessing.js';
 import { BASE_DISTORTION } from './shaders/LiquidShader.js';
 
 const MOUSE_LERP = 0.05;
@@ -54,6 +55,8 @@ export class SceneManager {
     this.renderer.toneMappingExposure = 1.0;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
+    this.postProcessing = new PostProcessing(this.renderer, this.scene, this.camera);
+
     this._onResize = this._onResize.bind(this);
     this._onPointerMove = this._onPointerMove.bind(this);
     this._animate = this._animate.bind(this);
@@ -103,6 +106,7 @@ export class SceneManager {
 
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(width, height);
+    this.postProcessing?.setSize(width, height);
   }
 
   /**
@@ -143,7 +147,7 @@ export class SceneManager {
       this.sculpture.rotation.y = this._spin.y + this._tilt.y;
     }
 
-    this.renderer.render(this.scene, this.camera);
+    this.postProcessing.render();
   }
 
   /** Tear down geometry, materials, listeners, and the renderer. */
@@ -177,6 +181,12 @@ export class SceneManager {
     });
 
     this.scene.clear();
+
+    if (this.postProcessing) {
+      this.postProcessing.dispose();
+      this.postProcessing = null;
+    }
+
     this.renderer.dispose();
     this.renderer.forceContextLoss();
     this.sculpture = null;
