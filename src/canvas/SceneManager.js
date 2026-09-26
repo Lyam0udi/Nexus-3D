@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ModelLoader } from './ModelLoader.js';
 
 /**
  * Production-grade WebGL renderer, camera, and delta-time animation loop.
@@ -12,6 +13,8 @@ export class SceneManager {
     this.clock = new THREE.Clock();
     this._rafId = null;
     this._disposed = false;
+    this.sculpture = null;
+    this.modelLoader = null;
 
     this.scene = new THREE.Scene();
 
@@ -21,7 +24,7 @@ export class SceneManager {
       0.1,
       1000,
     );
-    this.camera.position.set(0, 0, 4);
+    this.camera.position.set(0, 0, 8);
 
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
@@ -35,32 +38,27 @@ export class SceneManager {
     this.renderer.toneMappingExposure = 1.0;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-    this._initPlaceholderMesh();
     this._onResize = this._onResize.bind(this);
     window.addEventListener('resize', this._onResize);
 
     this._animate = this._animate.bind(this);
     this._animate();
+
+    this._mountSculpture();
   }
 
-  /** Temporary dark metallic icosahedron for render-loop validation. */
-  _initPlaceholderMesh() {
-    const geometry = new THREE.IcosahedronGeometry(1, 1);
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x1a1a1e,
-      metalness: 0.85,
-      roughness: 0.25,
-    });
-    this.placeholder = new THREE.Mesh(geometry, material);
-    this.placeholder.position.set(0, 0, 0);
-    this.scene.add(this.placeholder);
+  /**
+   * Load HDRI + physical centerpiece via ModelLoader and mount at origin.
+   */
+  async _mountSculpture() {
+    this.modelLoader = new ModelLoader(this.scene, this.renderer);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
-    keyLight.position.set(3, 4, 5);
-    this.scene.add(keyLight);
-
-    const fillLight = new THREE.AmbientLight(0x404050, 0.45);
-    this.scene.add(fillLight);
+    try {
+      this.sculpture = await this.modelLoader.load();
+      this.sculpture.position.set(0, 0, 0);
+    } catch (err) {
+      console.error('[SceneManager] Failed to mount central sculpture.', err);
+    }
   }
 
   _onResize() {
@@ -84,9 +82,9 @@ export class SceneManager {
 
     const delta = this.clock.getDelta();
 
-    if (this.placeholder) {
-      this.placeholder.rotation.x += delta * 0.35;
-      this.placeholder.rotation.y += delta * 0.55;
+    if (this.sculpture) {
+      this.sculpture.rotation.x += delta * 0.12;
+      this.sculpture.rotation.y += delta * 0.22;
     }
 
     this.renderer.render(this.scene, this.camera);
@@ -102,6 +100,11 @@ export class SceneManager {
     }
 
     window.removeEventListener('resize', this._onResize);
+
+    if (this.modelLoader) {
+      this.modelLoader.dispose();
+      this.modelLoader = null;
+    }
 
     this.scene.traverse((object) => {
       if (object.isMesh) {
@@ -119,6 +122,6 @@ export class SceneManager {
     this.scene.clear();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
-    this.placeholder = null;
+    this.sculpture = null;
   }
 }
