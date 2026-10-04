@@ -14,28 +14,52 @@
   <body>
     <canvas id="webgl-canvas" class="webgl-canvas"></canvas>
 
-    <div id="app">
-      <!-- ═══ ACT 1 — Hero ═══ -->
-      <section id="act-1" class="act act--hero" aria-label="Hero">
-        <header class="site-header">
-          <a href="#act-1" class="site-logo interactive">NEXUS</a>
-          <nav class="site-nav" aria-label="Primary">
-            <a href="#act-2" class="interactive">Features</a>
-            <a href="#act-3" class="interactive">Architecture</a>
-            <a href="#act-4" class="interactive">Terminal</a>
-          </nav>
+    <!-- Sticky site chrome — lives above scroll acts -->
+    <header class="site-header" id="site-header">
+      <div class="site-header__inner">
+        <a href="#act-1" class="site-logo interactive">NEXUS</a>
+
+        <nav class="site-nav" id="site-nav" aria-label="Primary">
+          <a href="#act-2" class="interactive" data-nav-link>Features</a>
+          <a href="#act-3" class="interactive" data-nav-link>Architecture</a>
+          <a href="#act-4" class="interactive" data-nav-link>Terminal</a>
+          <a href="#contact" class="interactive" data-nav-link>Contact</a>
+        </nav>
+
+        <div class="site-header__actions">
           <span class="status-pill interactive" id="webgl-status" role="status">
             <span class="status-pill__dot" aria-hidden="true"></span>
             <span class="status-pill__label">WebGL · LIVE</span>
           </span>
-        </header>
+          <a href="#contact" class="btn btn--nav interactive">Engage</a>
+          <button
+            type="button"
+            class="nav-toggle interactive"
+            id="nav-toggle"
+            aria-controls="site-nav"
+            aria-expanded="false"
+            aria-label="Open menu"
+          >
+            <span class="nav-toggle__bar" aria-hidden="true"></span>
+            <span class="nav-toggle__bar" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+    </header>
 
+    <div id="app">
+      <!-- ═══ ACT 1 — Hero ═══ -->
+      <section id="act-1" class="act act--hero" aria-label="Hero">
         <div class="act__content act__content--hero">
           <p class="eyebrow mono">SCROLL-DRIVEN EXPERIENCE</p>
           <h1 class="display-headline">NEXUS // 3D</h1>
           <p class="hero-lede">
-            A liquid-glass sculpture choreographed by scroll — four acts, one continuous WebGL engine.
+            A liquid-glass sculpture choreographed by scroll — four cinematic acts inside one continuous WebGL engine.
           </p>
+          <div class="hero-actions">
+            <a class="btn btn--primary interactive" href="#act-2">Explore Systems</a>
+            <a class="btn btn--ghost interactive" href="#contact">Start a Project</a>
+          </div>
         </div>
 
         <div class="scroll-indicator" aria-hidden="true">
@@ -50,7 +74,9 @@
           <header class="section-header">
             <p class="eyebrow mono">01 — FEATURES</p>
             <h2 class="section-title">Optical systems</h2>
-            <p class="section-lede">Three surfaces. One continuous light path.</p>
+            <p class="section-lede">
+              Precision materials, orbital camera motion, and shader warp — tuned as one light path.
+            </p>
           </header>
 
           <div class="glass-grid">
@@ -58,7 +84,7 @@
               <span class="glass-card__index mono">01</span>
               <h3 class="glass-card__title">Physical Materials</h3>
               <p class="glass-card__body">
-                MeshPhysicalMaterial with transmission, IOR, and reflectivity tuned for liquid glass.
+                MeshPhysicalMaterial with transmission, IOR, and reflectivity tuned for liquid glass refraction.
               </p>
             </article>
 
@@ -84,36 +110,71 @@
       <!-- ═══ ACT 3 — Architecture ═══ -->
       <section id="act-3" class="act act--architecture" aria-label="Architecture">
         <div class="act__inner">
-          <header class="section-header">
-            <p class="eyebrow mono">02 — ARCHITECTURE</p>
-            <h2 class="section-title">Signal readout</h2>
-            <p class="section-lede">Live metrics from the render pipeline.</p>
+          <header class="section-header section-header--split">
+            <div>
+              <p class="eyebrow mono">02 — ARCHITECTURE</p>
+              <h2 class="section-title">Signal readout</h2>
+            </div>
+            <p class="section-lede section-lede--right">
+              Live metrics from the render pipeline — capped pixel ratio, physical transmission, four locked acts.
+            </p>
           </header>
 
           <div class="metrics-panel glass" id="metrics-panel">
             <div class="metric" data-metric data-target="60" data-suffix=" fps">
-              <span class="metric__value mono"><span class="metric__num">0</span><span class="metric__suffix"> fps</span></span>
+              <span class="metric__value mono">
+                <span class="metric__num">0</span><span class="metric__suffix"> fps</span>
+              </span>
               <span class="metric__label">Target Frame Rate</span>
             </div>
             <div class="metric" data-metric data-target="2" data-suffix="×">
-              <span class="metric__value mono"><span class="metric__num">0</span><span class="metric__suffix">×</span></span>
+              <span class="metric__value mono">
+                <span class="metric__num">0</span><span class="metric__suffix">×</span>
+              </span>
               <span class="metric__label">Pixel Ratio Cap</span>
             </div>
             <div class="metric" data-metric data-target="4" data-suffix="">
-              <span class="metric__value mono"><span class="metric__num">0</span><span class="metric__suffix"></span></span>
+              <span class="metric__value mono">
+                <span class="metric__num">0</span><span class="metric__suffix"></span>
+              </span>
               <span class="metric__label">Scroll Acts</span>
             </div>
             <div class="metric" data-metric data-target="92" data-suffix="%">
-              <span class="metric__value mono"><span class="metric__num">0</span><span class="metric__suffix">%</span></span>
+              <span class="metric__value mono">
+                <span class="metric__num">0</span><span class="metric__suffix">%</span>
+              </span>
               <span class="metric__label">Transmission</span>
             </div>
           </div>
+
+          <ul class="arch-notes" aria-label="Architecture highlights">
+            <li class="arch-note">
+              <span class="arch-note__key mono">Stack</span>
+              <span class="arch-note__val">Vite · Three.js · GSAP · Lenis</span>
+            </li>
+            <li class="arch-note">
+              <span class="arch-note__key mono">Assets</span>
+              <span class="arch-note__val">Local GLB + HDRI only</span>
+            </li>
+            <li class="arch-note">
+              <span class="arch-note__key mono">Teardown</span>
+              <span class="arch-note__val">Full geometry &amp; material disposal</span>
+            </li>
+          </ul>
         </div>
       </section>
 
       <!-- ═══ ACT 4 — Terminal / CTA ═══ -->
       <section id="act-4" class="act act--terminal" aria-label="Terminal">
         <div class="act__inner act__inner--terminal">
+          <header class="section-header section-header--center">
+            <p class="eyebrow mono">03 — TERMINAL</p>
+            <h2 class="section-title">Enter the core</h2>
+            <p class="section-lede">
+              The camera passes through the mesh. The interface becomes the product.
+            </p>
+          </header>
+
           <div class="terminal glass">
             <div class="terminal__chrome">
               <span class="terminal__dots" aria-hidden="true">
@@ -144,18 +205,161 @@
             <footer class="terminal__footer">
               <ul class="social-links">
                 <li>
-                  <a class="interactive" href="https://github.com" target="_blank" rel="noopener noreferrer">GitHub</a>
+                  <a
+                    class="interactive"
+                    href="https://github.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >GitHub</a
+                  >
                 </li>
                 <li>
-                  <a class="interactive" href="https://x.com" target="_blank" rel="noopener noreferrer">X</a>
+                  <a
+                    class="interactive"
+                    href="https://x.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >X</a
+                  >
                 </li>
                 <li>
-                  <a class="interactive" href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                  <a
+                    class="interactive"
+                    href="https://www.linkedin.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >LinkedIn</a
+                  >
                 </li>
               </ul>
               <p class="repo-meta mono">nexus-3d · vite · three.js · gsap · lenis</p>
             </footer>
           </div>
+        </div>
+      </section>
+
+      <!-- ═══ CONTACT ═══ -->
+      <section id="contact" class="act act--contact" aria-label="Contact">
+        <div class="act__inner act__inner--contact">
+          <header class="section-header">
+            <p class="eyebrow mono">04 — CONTACT</p>
+            <h2 class="section-title">Build the next sequence</h2>
+            <p class="section-lede">
+              Tell us about your product, launch, or immersive brief — we reply within two business days.
+            </p>
+          </header>
+
+          <div class="contact-layout">
+            <form class="contact-form glass" id="contact-form" novalidate>
+              <div class="contact-form__row">
+                <label class="field">
+                  <span class="field__label mono">Name</span>
+                  <input
+                    class="field__input interactive"
+                    type="text"
+                    name="name"
+                    id="contact-name"
+                    autocomplete="name"
+                    required
+                    placeholder="Alex Rivera"
+                  />
+                </label>
+                <label class="field">
+                  <span class="field__label mono">Email</span>
+                  <input
+                    class="field__input interactive"
+                    type="email"
+                    name="email"
+                    id="contact-email"
+                    autocomplete="email"
+                    required
+                    placeholder="alex@studio.com"
+                  />
+                </label>
+              </div>
+
+              <label class="field">
+                <span class="field__label mono">Subject</span>
+                <input
+                  class="field__input interactive"
+                  type="text"
+                  name="subject"
+                  id="contact-subject"
+                  required
+                  placeholder="Immersive product launch"
+                />
+              </label>
+
+              <label class="field">
+                <span class="field__label mono">Message</span>
+                <textarea
+                  class="field__input field__input--area interactive"
+                  name="message"
+                  id="contact-message"
+                  rows="5"
+                  required
+                  placeholder="Timeline, goals, and the feeling you want the experience to carry…"
+                ></textarea>
+              </label>
+
+              <div class="contact-form__footer">
+                <button type="submit" class="btn btn--primary interactive" id="contact-submit">
+                  Send Transmission
+                </button>
+                <p class="contact-form__status mono" id="contact-status" role="status" aria-live="polite"></p>
+              </div>
+            </form>
+
+            <aside class="contact-aside">
+              <div class="contact-card glass">
+                <p class="contact-card__label mono">Direct line</p>
+                <a class="contact-card__link interactive" href="mailto:hello@nexus3d.studio"
+                  >hello@nexus3d.studio</a
+                >
+              </div>
+              <div class="contact-card glass">
+                <p class="contact-card__label mono">Studio hours</p>
+                <p class="contact-card__text">Mon–Fri · 09:00–18:00 UTC</p>
+              </div>
+              <div class="contact-card glass">
+                <p class="contact-card__label mono">Channels</p>
+                <ul class="social-links social-links--stack">
+                  <li>
+                    <a
+                      class="interactive"
+                      href="https://github.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      >GitHub</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      class="interactive"
+                      href="https://x.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      >X / Twitter</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      class="interactive"
+                      href="https://www.linkedin.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      >LinkedIn</a
+                    >
+                  </li>
+                </ul>
+              </div>
+            </aside>
+          </div>
+
+          <footer class="site-footer">
+            <p class="site-footer__brand mono">NEXUS // 3D</p>
+            <p class="site-footer__copy">© <span id="footer-year">2026</span> Nexus Studio. All rights reserved.</p>
+          </footer>
         </div>
       </section>
     </div>

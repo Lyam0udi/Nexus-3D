@@ -13,7 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const sceneManager = new SceneManager(canvas);
   const scrollController = new ScrollController(sceneManager);
   sceneManager.setScrollController(scrollController);
-  const overlayUI = new OverlayUI();
+  const overlayUI = new OverlayUI({
+    scrollTo: (target) => scrollController.scrollTo(target),
+    setScrollingEnabled: (enabled) => scrollController.setScrollingEnabled(enabled),
+  });
 
   // Expose for teardown / HMR safety in development
   if (import.meta.hot) {

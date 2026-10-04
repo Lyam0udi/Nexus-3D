@@ -69,8 +69,10 @@ export class ScrollController {
     this.timeline = gsap.timeline({
       defaults: { ease: 'power2.out' },
       scrollTrigger: {
+        // Keep the 4-act camera map locked to Acts 1–4; contact scrolls after.
         trigger: '#app',
         start: 'top top',
+        endTrigger: '#act-4',
         end: 'bottom bottom',
         scrub: 1,
         invalidateOnRefresh: true,
@@ -184,6 +186,27 @@ export class ScrollController {
   raf(timeMs) {
     if (this._disposed || !this.lenis) return;
     this.lenis.raf(timeMs);
+  }
+
+  /**
+   * Smooth-scroll to a section/element via Lenis when available.
+   * @param {string | Element} target
+   */
+  scrollTo(target) {
+    if (this._disposed) return;
+    if (this.lenis) {
+      this.lenis.scrollTo(target, { offset: 0, duration: 1.2 });
+      return;
+    }
+    const el = typeof target === 'string' ? document.querySelector(target) : target;
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /** Pause/resume Lenis (e.g. while the mobile nav is open). */
+  setScrollingEnabled(enabled) {
+    if (!this.lenis) return;
+    if (enabled) this.lenis.start();
+    else this.lenis.stop();
   }
 
   /** Tear down Lenis, ScrollTrigger, and the master timeline. */
