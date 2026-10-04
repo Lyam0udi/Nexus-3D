@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 28" fill="none" role="img" aria-label="NEXUS 3D">
+  <title>NEXUS // 3D</title>
+  <text
+    x="0"
+    y="20"
+    fill="#F2F0EC"
+    font-family="Syne, Arial Black, Arial, sans-serif"
+    font-size="18"
+    font-weight="700"
+    letter-spacing="4.2"
+  >NEXUS</text>
+  <text
+    x="118"
+    y="20"
+    fill="#C8B89A"
+    font-family="JetBrains Mono, ui-monospace, monospace"
+    font-size="12"
+    font-weight="500"
+    letter-spacing="2"
+  >// 3D</text>
+</svg>

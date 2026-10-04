@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NEXUS // 3D</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/assets/brand/nexus-logo-mark.jpg" />
+    <meta name="theme-color" content="#060608" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -17,7 +20,20 @@
     <!-- Sticky site chrome — lives above scroll acts -->
     <header class="site-header" id="site-header">
       <div class="site-header__inner">
-        <a href="#act-1" class="site-logo interactive">NEXUS</a>
+        <a href="#act-1" class="site-logo interactive" aria-label="NEXUS // 3D — Home">
+          <img
+            class="site-logo__mark"
+            src="/assets/brand/nexus-mark.svg"
+            width="28"
+            height="28"
+            alt=""
+            decoding="async"
+          />
+          <span class="site-logo__text">
+            <span class="site-logo__name">NEXUS</span>
+            <span class="site-logo__tag mono">// 3D</span>
+          </span>
+        </a>
 
         <nav class="site-nav" id="site-nav" aria-label="Primary">
           <a href="#act-2" class="interactive" data-nav-link>Features</a>
@@ -356,12 +372,92 @@
             </aside>
           </div>
 
-          <footer class="site-footer">
-            <p class="site-footer__brand mono">NEXUS // 3D</p>
-            <p class="site-footer__copy">© <span id="footer-year">2026</span> Nexus Studio. All rights reserved.</p>
-          </footer>
         </div>
       </section>
+
+      <!-- ═══ SITE FOOTER ═══ -->
+      <footer class="site-footer" id="site-footer">
+        <div class="site-footer__glow" aria-hidden="true"></div>
+        <div class="site-footer__inner">
+          <div class="site-footer__brand-block">
+            <a href="#act-1" class="site-logo site-logo--footer interactive" aria-label="NEXUS // 3D — Home">
+              <img
+                class="site-logo__mark"
+                src="/assets/brand/nexus-mark.svg"
+                width="36"
+                height="36"
+                alt=""
+                decoding="async"
+              />
+              <span class="site-logo__text">
+                <span class="site-logo__name">NEXUS</span>
+                <span class="site-logo__tag mono">// 3D</span>
+              </span>
+            </a>
+            <p class="site-footer__lede">
+              Liquid-glass WebGL experiences — scroll-driven, optically tuned, built for product launches.
+            </p>
+          </div>
+
+          <nav class="site-footer__nav" aria-label="Footer">
+            <div class="site-footer__col">
+              <p class="site-footer__heading mono">Navigate</p>
+              <ul class="site-footer__links">
+                <li><a class="interactive" href="#act-2">Features</a></li>
+                <li><a class="interactive" href="#act-3">Architecture</a></li>
+                <li><a class="interactive" href="#act-4">Terminal</a></li>
+                <li><a class="interactive" href="#contact">Contact</a></li>
+              </ul>
+            </div>
+            <div class="site-footer__col">
+              <p class="site-footer__heading mono">Connect</p>
+              <ul class="site-footer__links">
+                <li>
+                  <a
+                    class="interactive"
+                    href="https://github.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >GitHub</a
+                  >
+                </li>
+                <li>
+                  <a class="interactive" href="https://x.com" target="_blank" rel="noopener noreferrer"
+                    >X / Twitter</a
+                  >
+                </li>
+                <li>
+                  <a
+                    class="interactive"
+                    href="https://www.linkedin.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >LinkedIn</a
+                  >
+                </li>
+                <li>
+                  <a class="interactive" href="mailto:hello@nexus3d.studio">Email</a>
+                </li>
+              </ul>
+            </div>
+            <div class="site-footer__col site-footer__col--stack">
+              <p class="site-footer__heading mono">Stack</p>
+              <p class="site-footer__stack mono">Vite · Three.js · GSAP · Lenis</p>
+              <a class="btn btn--ghost btn--footer interactive" href="#contact">Start a Project</a>
+            </div>
+          </nav>
+
+          <div class="site-footer__bar">
+            <p class="site-footer__copy">
+              © <span id="footer-year">2026</span> Nexus Studio. All rights reserved.
+            </p>
+            <p class="site-footer__signal mono">
+              <span class="site-footer__signal-dot" aria-hidden="true"></span>
+              Engine online
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
 
     <script type="module" src="/src/main.js"></script>

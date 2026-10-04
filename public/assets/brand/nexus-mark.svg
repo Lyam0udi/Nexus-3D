@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-hidden="true">
+  <title>NEXUS</title>
+  <defs>
+    <linearGradient id="facetTop" x1="32" y1="6" x2="32" y2="28" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F2EDE4"/>
+      <stop offset="1" stop-color="#C8B89A"/>
+    </linearGradient>
+    <linearGradient id="facetLeft" x1="10" y1="24" x2="28" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E8E4DC"/>
+      <stop offset="1" stop-color="#A8A098"/>
+    </linearGradient>
+    <linearGradient id="facetRight" x1="36" y1="24" x2="54" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D4C4A8"/>
+      <stop offset="1" stop-color="#9A8868"/>
+    </linearGradient>
+  </defs>
+  <path
+    d="M32 4 L44 14 L52 28 L48 42 L36 54 L28 54 L16 42 L12 28 L20 14 Z"
+    stroke="#1A1A1E"
+    stroke-width="2.25"
+    stroke-linejoin="round"
+    fill="#0C0C10"
+  />
+  <polygon points="32,8 42,16 32,26 22,16" fill="url(#facetTop)"/>
+  <polygon points="32,8 42,16 36,12" fill="#F7F3EB" opacity="0.85"/>
+  <polygon points="42,16 48,26 32,26" fill="#C8B89A"/>
+  <polygon points="22,16 32,26 20,40 14,28" fill="url(#facetLeft)"/>
+  <polygon points="14,28 20,40 18,46 12,34" fill="#BEB8B0"/>
+  <polygon points="20,40 32,26 28,50 18,46" fill="#9C968E"/>
+  <polygon points="42,16 50,28 44,40 32,26" fill="url(#facetRight)"/>
+  <polygon points="50,28 52,34 46,46 44,40" fill="#A89068"/>
+  <polygon points="32,26 44,40 46,46 36,50" fill="#8A744C"/>
+  <path d="M42 16 L48 26 L46 30" stroke="#5DDEA8" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
+  <path
+    d="M32 22 L38 25.5 V32.5 L32 36 L26 32.5 V25.5 Z"
+    fill="#060608"
+    stroke="#C8B89A"
+    stroke-width="1.25"
+    stroke-linejoin="round"
+  />
+</svg>
