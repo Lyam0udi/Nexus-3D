@@ -3,16 +3,157 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NEXUS // 3D</title>
+    <title>NEXUS // 3D — Scroll-Driven WebGL Experience</title>
+    <meta
+      name="description"
+      content="NEXUS // 3D is a liquid-glass WebGL sculpture choreographed by scroll — four cinematic acts powered by Three.js, GSAP, and Lenis for immersive product launches."
+    />
+    <meta
+      name="keywords"
+      content="NEXUS 3D, WebGL experience, Three.js, scroll-driven animation, GSAP ScrollTrigger, Lenis, liquid glass shader, immersive product launch, creative technology"
+    />
+    <meta name="author" content="Nexus Studio" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="bingbot" content="index, follow" />
+    <link rel="canonical" href="https://nexus3d.studio/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="NEXUS // 3D" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://nexus3d.studio/" />
+    <meta property="og:title" content="NEXUS // 3D — Scroll-Driven WebGL Experience" />
+    <meta
+      property="og:description"
+      content="A liquid-glass sculpture choreographed by scroll — four cinematic acts inside one continuous WebGL engine."
+    />
+    <meta property="og:image" content="https://nexus3d.studio/assets/brand/nexus-logo-mark.jpg" />
+    <meta property="og:image:alt" content="NEXUS // 3D brand mark" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="NEXUS // 3D — Scroll-Driven WebGL Experience" />
+    <meta
+      name="twitter:description"
+      content="A liquid-glass sculpture choreographed by scroll — four cinematic acts inside one continuous WebGL engine."
+    />
+    <meta name="twitter:image" content="https://nexus3d.studio/assets/brand/nexus-logo-mark.jpg" />
+    <meta name="twitter:image:alt" content="NEXUS // 3D brand mark" />
+
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/assets/brand/nexus-logo-mark.jpg" />
     <meta name="theme-color" content="#060608" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <link rel="alternate" type="text/plain" title="LLMs" href="/llms.txt" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Structured data (SEO + GEO) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://nexus3d.studio/#website",
+            "url": "https://nexus3d.studio/",
+            "name": "NEXUS // 3D",
+            "description": "A liquid-glass WebGL sculpture choreographed by scroll — four cinematic acts inside one continuous engine.",
+            "inLanguage": "en",
+            "publisher": { "@id": "https://nexus3d.studio/#organization" }
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://nexus3d.studio/#organization",
+            "name": "Nexus Studio",
+            "url": "https://nexus3d.studio/",
+            "email": "hello@nexus3d.studio",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://nexus3d.studio/assets/brand/nexus-mark.svg"
+            },
+            "sameAs": [
+              "https://github.com",
+              "https://x.com",
+              "https://www.linkedin.com"
+            ]
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://nexus3d.studio/#webpage",
+            "url": "https://nexus3d.studio/",
+            "name": "NEXUS // 3D — Scroll-Driven WebGL Experience",
+            "isPartOf": { "@id": "https://nexus3d.studio/#website" },
+            "about": { "@id": "https://nexus3d.studio/#software" },
+            "description": "NEXUS // 3D is a scroll-driven WebGL product experience with physical glass materials, orbital camera motion, and cinematic post-processing.",
+            "inLanguage": "en",
+            "primaryImageOfPage": {
+              "@type": "ImageObject",
+              "url": "https://nexus3d.studio/assets/brand/nexus-logo-mark.jpg"
+            }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://nexus3d.studio/#software",
+            "name": "NEXUS // 3D",
+            "applicationCategory": "MultimediaApplication",
+            "operatingSystem": "Web Browser",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "description": "Scroll-driven liquid-glass WebGL experience built with Vite, Three.js, GSAP ScrollTrigger, and Lenis.",
+            "creator": { "@id": "https://nexus3d.studio/#organization" }
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://nexus3d.studio/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is NEXUS // 3D?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "NEXUS // 3D is a liquid-glass WebGL sculpture choreographed by scroll. It presents four cinematic acts inside one continuous engine for immersive product launches."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What technology powers NEXUS // 3D?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "The experience runs on Vite with vanilla JavaScript modules, Three.js for WebGL rendering, GSAP ScrollTrigger for camera choreography, and Lenis for momentum-based smooth scrolling."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How does the scroll-driven camera choreography work?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "A master GSAP ScrollTrigger timeline maps page scroll to four acts: macro close-up, a 120° orbital sweep, a dive into the mesh with noise warp, then a pass through the core into the terminal interface."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How do I start a project with Nexus Studio?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Use the contact form on this site or email hello@nexus3d.studio. Share your product, launch goals, and desired feeling — Nexus Studio replies within two business days."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <canvas id="webgl-canvas" class="webgl-canvas"></canvas>
@@ -39,6 +180,7 @@
           <a href="#act-2" class="interactive" data-nav-link>Features</a>
           <a href="#act-3" class="interactive" data-nav-link>Architecture</a>
           <a href="#act-4" class="interactive" data-nav-link>Terminal</a>
+          <a href="#faq" class="interactive" data-nav-link>FAQ</a>
           <a href="#contact" class="interactive" data-nav-link>Contact</a>
         </nav>
 
@@ -254,11 +396,64 @@
         </div>
       </section>
 
+      <!-- ═══ FAQ (SEO + GEO answer surface) ═══ -->
+      <section id="faq" class="act act--faq" aria-label="FAQ">
+        <div class="act__inner act__inner--faq">
+          <header class="section-header">
+            <p class="eyebrow mono">04 — FAQ</p>
+            <h2 class="section-title">Clear answers</h2>
+            <p class="section-lede">
+              Straight facts about the experience, the stack, and how to engage Nexus Studio.
+            </p>
+          </header>
+
+          <div class="faq-list">
+            <details class="faq-item glass interactive" open>
+              <summary class="faq-item__q">What is NEXUS // 3D?</summary>
+              <p class="faq-item__a">
+                NEXUS // 3D is a liquid-glass WebGL sculpture choreographed by scroll. It presents
+                four cinematic acts inside one continuous engine for immersive product launches.
+              </p>
+            </details>
+
+            <details class="faq-item glass interactive">
+              <summary class="faq-item__q">What technology powers NEXUS // 3D?</summary>
+              <p class="faq-item__a">
+                The experience runs on Vite with vanilla JavaScript modules, Three.js for WebGL
+                rendering, GSAP ScrollTrigger for camera choreography, and Lenis for momentum-based
+                smooth scrolling.
+              </p>
+            </details>
+
+            <details class="faq-item glass interactive">
+              <summary class="faq-item__q">How does the scroll-driven camera choreography work?</summary>
+              <p class="faq-item__a">
+                A master GSAP ScrollTrigger timeline maps page scroll to four acts: macro close-up,
+                a 120° orbital sweep, a dive into the mesh with noise warp, then a pass through the
+                core into the terminal interface.
+              </p>
+            </details>
+
+            <details class="faq-item glass interactive">
+              <summary class="faq-item__q">How do I start a project with Nexus Studio?</summary>
+              <p class="faq-item__a">
+                Use the
+                <a class="interactive" href="#contact">contact form</a>
+                or email
+                <a class="interactive" href="mailto:hello@nexus3d.studio">hello@nexus3d.studio</a>.
+                Share your product, launch goals, and desired feeling — Nexus Studio replies within
+                two business days.
+              </p>
+            </details>
+          </div>
+        </div>
+      </section>
+
       <!-- ═══ CONTACT ═══ -->
       <section id="contact" class="act act--contact" aria-label="Contact">
         <div class="act__inner act__inner--contact">
           <header class="section-header">
-            <p class="eyebrow mono">04 — CONTACT</p>
+            <p class="eyebrow mono">05 — CONTACT</p>
             <h2 class="section-title">Build the next sequence</h2>
             <p class="section-lede">
               Tell us about your product, launch, or immersive brief — we reply within two business days.
@@ -406,6 +601,7 @@
                 <li><a class="interactive" href="#act-2">Features</a></li>
                 <li><a class="interactive" href="#act-3">Architecture</a></li>
                 <li><a class="interactive" href="#act-4">Terminal</a></li>
+                <li><a class="interactive" href="#faq">FAQ</a></li>
                 <li><a class="interactive" href="#contact">Contact</a></li>
               </ul>
             </div>

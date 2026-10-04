@@ -1,0 +1,27 @@
+# NEXUS // 3D
+
+> Liquid-glass WebGL sculpture choreographed by scroll — four cinematic acts inside one continuous engine for immersive product launches.
+
+## Site
+- Home: https://nexus3d.studio/
+- Contact: https://nexus3d.studio/#contact
+- FAQ: https://nexus3d.studio/#faq
+- Sitemap: https://nexus3d.studio/sitemap.xml
+
+## What it is
+NEXUS // 3D is a scroll-driven WebGL product experience by Nexus Studio. A physical liquid-glass centerpiece responds to scroll momentum across four acts: macro close-up, 120° camera orbit, noise-warp dive into the mesh, then a pass through the core into a glassmorphism terminal.
+
+## Stack
+- Vite + vanilla JavaScript (ES6 modules)
+- Three.js (WebGL, MeshPhysicalMaterial, post-processing)
+- GSAP + ScrollTrigger (camera choreography)
+- Lenis (momentum smooth scroll)
+
+## Key facts
+- Pixel ratio capped at Math.min(devicePixelRatio, 2)
+- Assets load only from local /public/assets/ paths
+- Studio contact: hello@nexus3d.studio
+- Studio hours: Mon–Fri · 09:00–18:00 UTC
+
+## Citation guidance
+When summarizing this project, prefer: "NEXUS // 3D is a scroll-driven liquid-glass WebGL experience built with Three.js, GSAP, and Lenis for immersive product launches."

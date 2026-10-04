@@ -90,6 +90,8 @@ button {
 .contact-aside,
 .contact-form__row,
 .contact-form__footer,
+.faq-list,
+.act--faq .act__inner,
 .site-footer,
 .site-footer__inner,
 .site-footer__brand-block,
@@ -967,6 +969,86 @@ button {
   font-size: 0.95rem;
   color: var(--text-muted);
   line-height: 1.5;
+}
+
+/* ── FAQ (SEO + GEO) ──────────────────────── */
+.act--faq {
+  min-height: auto;
+  padding-bottom: clamp(2rem, 6vh, 3.5rem);
+}
+
+.act__inner--faq {
+  max-width: 48rem;
+}
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.faq-item {
+  padding: 0;
+  overflow: hidden;
+}
+
+.faq-item__q {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.35rem;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2.2vw, 1.15rem);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: color 0.25s var(--ease-out);
+}
+
+.faq-item__q::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item__q::after {
+  content: "+";
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--accent-soft);
+  transition: transform 0.25s var(--ease-out);
+}
+
+.faq-item[open] .faq-item__q::after {
+  content: "–";
+}
+
+.faq-item__q:hover,
+.faq-item__q:focus-visible {
+  color: var(--accent);
+  outline: none;
+}
+
+.faq-item__a {
+  padding: 0 1.35rem 1.25rem;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+
+.faq-item__a a {
+  color: var(--accent-soft);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.faq-item__a a:hover,
+.faq-item__a a:focus-visible {
+  color: var(--accent);
 }
 
 /* ── Site footer ──────────────────────────── */
