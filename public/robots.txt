@@ -39,4 +39,4 @@ Allow: /
 User-agent: Applebot-Extended
 Allow: /
 
-Sitemap: https://nexus3d.studio/sitemap.xml
+Sitemap: https://nexus-3-d-three.vercel.app/sitemap.xml
