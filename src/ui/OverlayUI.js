@@ -17,6 +17,7 @@ export class OverlayUI {
    */
   constructor(options = {}) {
     this._disposed = false;
+    this._navOpen = false;
     this._tiltCleanups = [];
     this._triggers = [];
     this._listeners = [];
@@ -141,10 +142,14 @@ export class OverlayUI {
 
   _setNavOpen(open) {
     if (!this._header || !this._navToggle) return;
+    // Idempotent — avoids redundant Lenis start/stop calls from anchor/resize handlers.
+    if (this._navOpen === open) return;
+    this._navOpen = open;
+
     this._header.classList.toggle('is-nav-open', open);
     this._navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     this._navToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
-    document.body.style.overflow = open ? 'hidden' : '';
+    document.documentElement.classList.toggle('is-nav-locked', open);
     this._setScrollingEnabled?.(!open);
   }
 
@@ -164,9 +169,12 @@ export class OverlayUI {
       if (event.key === 'Escape') this._setNavOpen(false);
     });
 
-    this._addListener(window, 'resize', () => {
-      if (window.innerWidth >= 768) this._setNavOpen(false);
-    });
+    // Close the overlay whenever we cross into the desktop layout (resize / rotate).
+    const desktopMq = window.matchMedia('(min-width: 768px)');
+    const onBreakpoint = (event) => {
+      if (event.matches) this._setNavOpen(false);
+    };
+    this._addListener(desktopMq, 'change', onBreakpoint);
   }
 
   _initSmoothAnchors() {

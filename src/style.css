@@ -203,18 +203,34 @@ button {
   height: var(--header-h);
   padding-inline: var(--page-pad-x);
   pointer-events: none;
-  transition:
-    background 0.35s var(--ease-out),
-    border-color 0.35s var(--ease-out),
-    backdrop-filter 0.35s var(--ease-out);
-  border-bottom: 1px solid transparent;
 }
 
-.site-header.is-scrolled {
+/*
+ * The scrolled "glass bar" lives on a pseudo-element, NOT on .site-header.
+ * `backdrop-filter` (like transform/filter) turns an element into the containing
+ * block for `position: fixed` descendants — which used to collapse the fullscreen
+ * mobile nav overlay into the 4.25rem header bar once the page had been scrolled.
+ */
+.site-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
   background: rgba(6, 6, 8, 0.72);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom-color: var(--glass-border);
+  border-bottom: 1px solid var(--glass-border);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s var(--ease-out);
+}
+
+.site-header.is-scrolled::before {
+  opacity: 1;
+}
+
+.site-header.is-nav-open::before {
+  opacity: 0;
 }
 
 .site-header__inner {
@@ -1205,24 +1221,44 @@ button {
 
 /* ── Responsive ───────────────────────────── */
 @media (max-width: 767px) {
+  .site-header__inner {
+    gap: 0.75rem;
+    justify-content: space-between;
+  }
+
+  .site-header__actions {
+    margin-left: auto;
+  }
+
+  .site-logo {
+    min-width: 0;
+  }
+
   .site-nav {
     position: fixed;
     inset: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
     margin: 0;
     flex-direction: column;
+    align-items: center;
     justify-content: center;
     gap: 1.75rem;
-    padding: var(--header-h) var(--page-pad-x) 2rem;
-    background: rgba(6, 6, 8, 0.96);
+    padding: calc(var(--header-h) + 1rem) var(--page-pad-x) 2rem;
+    background: rgba(6, 6, 8, 0.97);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     opacity: 0;
     visibility: hidden;
+    pointer-events: none;
     transform: translateY(-0.5rem);
     transition:
       opacity 0.3s var(--ease-out),
-      visibility 0.3s var(--ease-out),
-      transform 0.3s var(--ease-out);
+      transform 0.3s var(--ease-out),
+      visibility 0s linear 0.3s;
   }
 
   .site-header.is-nav-open .site-nav {
@@ -1230,14 +1266,26 @@ button {
     visibility: visible;
     transform: translateY(0);
     pointer-events: auto;
+    transition-delay: 0s;
+  }
+
+  .site-nav a {
+    pointer-events: none;
   }
 
   .site-header.is-nav-open .site-nav a {
     pointer-events: auto;
+    padding: 0.4rem 0.75rem;
     font-size: 1rem;
     letter-spacing: 0.22em;
     color: var(--text-primary);
   }
+}
+
+/* Scroll lock while the mobile menu is open (paired with Lenis stop) */
+html.is-nav-locked,
+html.is-nav-locked body {
+  overflow: hidden;
 }
 
 @media (min-width: 640px) {
@@ -1378,6 +1426,7 @@ button {
 
   .glass-card,
   .site-header,
+  .site-header::before,
   .site-nav,
   .site-logo__mark,
   .btn,
