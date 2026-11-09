@@ -1,8 +1,8 @@
 # NEXUS // 3D
 
-Portfolio-grade scroll cinema: a liquid-glass WebGL sculpture directed by scroll — five acts inside one continuous engine.
+Portfolio-grade scroll cinema: one WebGL scene directed by scroll — five acts, then contact.
 
-**Visual intent:** dark glass square in an obsidian void — UI accent (`#c8b89a`). Short film with a **mode shift** then **emergence**: square cinema → digital interior → architectural `core.glb` in the void. Emotional map: presence → orbit → threshold → system → core.
+**Visual intent:** obsidian void, brand metal `#c8b89a` (logo mark, `// 3D`, sculpture rim). Opening is a pair of beveled square rings with an inner crystal. After the threshold the void yields to a digital interior. The architectural `core.glb` appears only at the end, in the same bronze family. Emotional map: presence → orbit → threshold → system → core.
 
 **Live demo:** [nexus-3-d-three.vercel.app](https://nexus-3-d-three.vercel.app/)
 
@@ -36,14 +36,14 @@ Place these under `public/assets/` (never fetched remotely):
 
 | File | Role |
 | --- | --- |
-| `core.glb` | Optional custom sculpture mesh (see below) |
+| `core.glb` | Act 5 emergence sculpture only |
 | `studio.hdr` | Studio HDRI for reflections (not used as skybox) |
-| `noise.png` | Microscopic grain for the liquid shader |
-| `brand/*` | Logo mark / wordmark |
+| `noise.png` | Grain map kept for the liquid-shader path |
+| `brand/*` | Logo mark / wordmark — metal `#c8b89a`, no mint accent |
 
-**Demo default:** Acts 1–3 use a dark glass square; `core.glb` appears only at Act 5 emergence (square twin if the GLB is missing).
+**Demo default:** Acts 1–3 use the procedural portal in `ModelLoader._createSquareVolume()` (two beveled square rings + crystal). `core.glb` is revealed in Act 5. If the GLB is missing, that beat reuses a portal twin.
 
-If `studio.hdr` / `noise.png` are missing, the engine falls back to a warm procedural light probe and generated grain.
+If `studio.hdr` or `noise.png` is missing, the engine uses a procedural reflection probe and generated grain. Scene lights stay in the brand bronze.
 
 ## Architecture
 
@@ -51,11 +51,11 @@ If `studio.hdr` / `noise.png` are missing, the engine falls back to a warm proce
 src/
   canvas/
     SceneManager.js      # Renderer, camera, RAF, mouse inertia, atmosphere
-    ModelLoader.js       # Local GLB + HDRI + physical / liquid materials
+    ModelLoader.js       # Portal (Acts 1–3), GLB emergence (Act 5), HDRI
     PostProcessing.js    # Bloom, chromatic aberration, focus falloff
     shaders/LiquidShader.js
   animations/
-    ScrollController.js  # Lenis ↔ master scrub timeline (4 acts)
+    ScrollController.js  # Lenis ↔ master scrub timeline (5 acts)
   ui/
     OverlayUI.js         # HUD enter/hold/exit + nav / contact
   main.js
@@ -66,38 +66,39 @@ index.html               # #film acts + compact #coda
 
 **Motion hierarchy**
 
-1. **Scroll** — primary director (camera orbit, dive, post-FX, HUD)
+1. **Scroll** — primary director (orbit, threshold hold, mode shift, emergence, HUD)
 2. **Idle** — barely-alive micro spin
 3. **Pointer** — subtle optical response
 4. **Post FX** — breathe with acts (not always-on filter)
 
 ## Scroll map (taste-test)
 
-Scrub `#film` (Acts 1–4). FAQ / contact live in `#coda` after the climax.
+Scrub `#film` (Acts 1–5). FAQ and contact live in `#coda` after the film. Navbar **Core** lands on Act 5; that card stays fully opaque through the end of the reel.
 
 | Act | Scroll | What you should feel |
 | --- | --- | --- |
-| 1 | 0–25% | Presence — brand + architectural silhouette |
-| 2 | 25–50% | Orbit — sculpture cinema (emotional walk-around) |
-| 3 | 50–75% | Threshold — slight approach, then **mode shift** into the system |
-| 4 | 75–100% | Digital interior — you crossed; system UI + CTA (not more zoom) |
-| Coda | after | Compact contact + FAQ — not a second site |
+| 1 | 0–20% | Presence — brand + square-ring portal |
+| 2 | 20–40% | Orbit — sculpture cinema |
+| 3 | 40–60% | Threshold — hold, then cross into the system (not a zoom crash) |
+| 4 | 60–80% | Digital interior — “You crossed”; system card, not more sculpture |
+| 5 | 80–100% | Emergence — same-family `core.glb` in the void; “The core remains” |
+| Coda | after | Contact + FAQ. The system veil is gone |
 
-**Desktop:** Acts 1–2 should feel like watching a sculpture; at Act 3 peak the void yields to a grid/system room.  
-**Mobile:** same map; open the nav after scrolling to confirm the fullscreen menu still works.  
-**Reduced motion:** `prefers-reduced-motion: reduce` shortens travel, disables heavy warp/tilt, keeps UI readable.
+**Desktop:** Acts 1–2 are sculpture cinema. Act 4 is a second experience (grid/system). Act 5 brings the architectural model back.  
+**Mobile:** same map; open the nav after scrolling and confirm Core and Contact still read.  
+**Reduced motion:** `prefers-reduced-motion: reduce` shortens travel and keeps the cards readable.
 
 ## Customize the sculpture
 
-1. Tune the opening square in `ModelLoader._createSquareVolume()`.
-2. Replace `public/assets/core.glb` for the Act 5 emergence hero.
+1. Tune the opening portal in `ModelLoader._createSquareVolume()`.
+2. Replace `public/assets/core.glb` for the Act 5 emergence hero. Keep it bronze (`#c8b89a` family), not chalk-white.
 3. Optionally swap `studio.hdr` for another local equirectangular HDRI.
-4. Interior mode mix is driven in `ScrollController.js` (`optics.interior`) and styled via `#system-interior`.
-5. Camera beats live in `ScrollController.js` (`ORBIT` constants).
+4. Interior mix is `optics.interior` in `ScrollController.js`, drawn by `#system-interior`. Emergence is `optics.emergence`.
+5. Camera beats live in `ScrollController.js` (`ORBIT`).
 
 ## Technical notes
 
-- Pixel ratio capped at `Math.min(devicePixelRatio, 2)` (lower on low-power).
+- Pixel ratio capped at `1.75` (`1.25` on low-power / coarse pointer).
 - WebGL owns atmosphere (`alpha: false`, obsidian clear + fog). CSS is solid `#060608` + text scrims only.
 - Canvas: `position: fixed; inset: 0; pointer-events: none; z-index: 0`. Interactive UI sets `pointer-events: auto`.
 - Teardown disposes geometry, materials, composer, Lenis, and ScrollTrigger.
