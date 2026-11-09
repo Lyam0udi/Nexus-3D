@@ -1,41 +1,68 @@
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
-
-const TILT_MAX = 10;
-const TILT_EASE = 0.12;
 
 /**
- * Luxury overlay interactions: glass-card tilt, Act-3 metric counters,
- * sticky nav chrome, and contact form feedback.
- * Keeps pointer-events isolation intact — only `.interactive` nodes receive input.
+ * Cinematic HUD / overlay choreography.
+ * Act overlays enter · hold · exit with the film; coda stays readable.
+ * Keeps pointer-events isolation — only `.interactive` nodes receive input.
  */
 export class OverlayUI {
   /**
-   * @param {{ scrollTo?: (target: string | Element) => void, setScrollingEnabled?: (enabled: boolean) => void }} [options]
+   * @param {{
+   *   scrollTo?: (target: string | Element) => void,
+   *   setScrollingEnabled?: (enabled: boolean) => void,
+   *   onProgress?: (fn: (progress: number, act: number) => void) => () => void,
+   * }} [options]
    */
   constructor(options = {}) {
     this._disposed = false;
     this._navOpen = false;
-    this._tiltCleanups = [];
-    this._triggers = [];
     this._listeners = [];
+    this._unsubscribeProgress = null;
+    this._introTween = null;
     this._scrollTo = typeof options.scrollTo === 'function' ? options.scrollTo : null;
     this._setScrollingEnabled =
       typeof options.setScrollingEnabled === 'function' ? options.setScrollingEnabled : null;
+    this._reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     this._header = document.getElementById('site-header');
     this._nav = document.getElementById('site-nav');
     this._navToggle = document.getElementById('nav-toggle');
 
-    this._initTiltCards();
-    this._initMetricCounters();
+    this._acts = {
+      1: document.getElementById('act-1'),
+      2: document.getElementById('act-2'),
+      3: document.getElementById('act-3'),
+      4: document.getElementById('act-4'),
+      5: document.getElementById('act-5'),
+    };
+    this._hudItems = Array.from(document.querySelectorAll('[data-hud-item]'));
+    this._systemInterior = document.getElementById('system-interior');
+    this._introDone = this._reducedMotion;
+    this._lastProgress = 0;
+    this._lastAct = 1;
+    this._lastInterior = 0;
+    this._lastEmergence = 0;
+
     this._initStickyHeader();
     this._initMobileNav();
     this._initSmoothAnchors();
     this._initContactForm();
     this._initFooterYear();
+    this._initLoadIntro();
+
+    if (typeof options.onProgress === 'function') {
+      this._unsubscribeProgress = options.onProgress(
+        (progress, act, interior = 0, emergence = 0) => {
+          this._lastProgress = progress;
+          this._lastAct = act;
+          this._lastInterior = interior;
+          this._lastEmergence = emergence;
+          this._choreograph(progress, act, interior, emergence);
+        },
+      );
+    } else {
+      this._choreograph(0, 1, 0, 0);
+    }
   }
 
   _addListener(target, type, handler, options) {
@@ -44,95 +71,138 @@ export class OverlayUI {
     this._listeners.push(() => target.removeEventListener(type, handler, options));
   }
 
-  _initTiltCards() {
-    const cards = document.querySelectorAll('[data-tilt]');
-    cards.forEach((card) => {
-      const state = { rx: 0, ry: 0, tx: 0, ty: 0 };
-      let rafId = 0;
+  _initLoadIntro() {
+    const hero = this._acts[1]?.querySelector('[data-act-stage]');
+    if (!hero) return;
 
-      const tick = () => {
-        if (this._disposed) return;
-        state.rx += (state.tx - state.rx) * TILT_EASE;
-        state.ry += (state.ty - state.ry) * TILT_EASE;
-        card.style.transform = `perspective(800px) rotateX(${state.rx}deg) rotateY(${state.ry}deg)`;
-        if (Math.abs(state.tx - state.rx) > 0.01 || Math.abs(state.ty - state.ry) > 0.01) {
-          rafId = requestAnimationFrame(tick);
-        } else {
-          rafId = 0;
-        }
-      };
+    if (this._reducedMotion) {
+      gsap.set(hero, { opacity: 1, y: 0 });
+      this._introDone = true;
+      return;
+    }
 
-      const requestTick = () => {
-        if (!rafId) rafId = requestAnimationFrame(tick);
-      };
-
-      const onMove = (event) => {
-        const rect = card.getBoundingClientRect();
-        const px = (event.clientX - rect.left) / rect.width;
-        const py = (event.clientY - rect.top) / rect.height;
-        state.ty = (px - 0.5) * TILT_MAX * 2;
-        state.tx = (0.5 - py) * TILT_MAX * 2;
-        requestTick();
-      };
-
-      const onLeave = () => {
-        state.tx = 0;
-        state.ty = 0;
-        requestTick();
-      };
-
-      card.addEventListener('pointermove', onMove);
-      card.addEventListener('pointerleave', onLeave);
-      card.addEventListener('pointercancel', onLeave);
-
-      this._tiltCleanups.push(() => {
-        card.removeEventListener('pointermove', onMove);
-        card.removeEventListener('pointerleave', onLeave);
-        card.removeEventListener('pointercancel', onLeave);
-        if (rafId) cancelAnimationFrame(rafId);
-        card.style.transform = '';
-      });
+    gsap.set(hero, { opacity: 0, y: 28 });
+    this._introTween = gsap.to(hero, {
+      opacity: 1,
+      y: 0,
+      duration: 1.15,
+      delay: 0.2,
+      ease: 'power3.out',
+      onComplete: () => {
+        this._introDone = true;
+        this._choreograph(
+          this._lastProgress,
+          this._lastAct,
+          this._lastInterior,
+          this._lastEmergence,
+        );
+      },
     });
   }
 
-  _initMetricCounters() {
-    const panel = document.getElementById('metrics-panel');
-    if (!panel) return;
+  /**
+   * Map film progress → overlay visibility + interior / emergence modes.
+   * @param {number} progress
+   * @param {number} act
+   * @param {number} interior 0–1
+   * @param {number} emergence 0–1
+   */
+  _choreograph(progress, act, interior = 0, emergence = 0) {
+    if (this._disposed) return;
 
-    const metrics = panel.querySelectorAll('[data-metric]');
+    const interiorT = Math.max(0, Math.min(1, interior));
+    const emergeT = Math.max(0, Math.min(1, emergence));
+    // Veil peels as we emerge — must not cover coda/contact
+    const veil = Math.max(0, interiorT * (1 - emergeT));
 
-    metrics.forEach((metric) => {
-      const numEl = metric.querySelector('.metric__num');
-      if (!numEl) return;
+    // 5-act map: core cinema → threshold hold → system → emergence
+    this._setActVisibility(1, this._band(progress, 0, 0.14, 0.18) * (1 - interiorT));
+    this._setActVisibility(2, this._band(progress, 0.2, 0.34, 0.4) * (1 - interiorT));
+    // Hold "The threshold" longer, then yield as the cross begins
+    this._setActVisibility(
+      3,
+      this._band(progress, 0.4, 0.52, 0.6) * (1 - Math.max(0, (interiorT - 0.25) / 0.75)),
+    );
+    this._setActVisibility(
+      4,
+      this._band(progress, 0.6, 0.72, 0.8) * (1 - emergeT),
+    );
+    // Stay fully readable through the end — Core nav lands at the bottom of the film
+    this._setActVisibility(5, this._band(progress, 0.78, 1.2, 1.35));
 
-      const target = Number(metric.dataset.target) || 0;
-      const proxy = { value: 0 };
-
-      const trigger = ScrollTrigger.create({
-        trigger: metric,
-        start: 'top 85%',
-        once: true,
-        onEnter: () => {
-          gsap.to(proxy, {
-            value: target,
-            duration: 1.6,
-            ease: 'power2.out',
-            onUpdate: () => {
-              numEl.textContent = String(Math.round(proxy.value));
-            },
-          });
-        },
-      });
-
-      this._triggers.push(trigger);
+    const hud = this._band(progress, 0.22, 0.34, 0.38) * (1 - interiorT);
+    this._hudItems.forEach((item, index) => {
+      const stagger = index * 0.035;
+      const local = Math.max(0, Math.min(1, (hud - stagger) / Math.max(0.001, 1 - stagger)));
+      item.style.opacity = String(local);
+      item.style.transform = `translate3d(${(1 - local) * -1.25}rem, 0, 0)`;
     });
+
+    if (this._systemInterior) {
+      this._systemInterior.style.opacity = String(veil);
+      this._systemInterior.style.visibility = veil < 0.04 ? 'hidden' : 'visible';
+      this._systemInterior.setAttribute('aria-hidden', veil < 0.2 ? 'true' : 'false');
+      this._systemInterior.classList.toggle('is-live', veil > 0.45);
+    }
+
+    document.documentElement.dataset.act = String(act);
+    document.documentElement.dataset.interior = veil > 0.45 ? '1' : '0';
+    document.documentElement.dataset.emergence = emergeT > 0.45 ? '1' : '0';
+    document.documentElement.style.setProperty('--interior', String(veil));
+    document.documentElement.style.setProperty('--emergence', String(emergeT));
+  }
+
+  /**
+   * Smooth enter→hold→exit envelope.
+   * @param {number} p
+   * @param {number} enterEnd
+   * @param {number} holdEnd
+   * @param {number} exitEnd
+   */
+  _band(p, enterEnd, holdEnd, exitEnd) {
+    if (p <= 0) return enterEnd <= 0 ? 1 : 0;
+    if (p < enterEnd) return this._smooth(p / Math.max(enterEnd, 1e-6));
+    if (p <= holdEnd) return 1;
+    if (p >= exitEnd) return 0;
+    return 1 - this._smooth((p - holdEnd) / Math.max(exitEnd - holdEnd, 1e-6));
+  }
+
+  /** @param {number} t */
+  _smooth(t) {
+    const x = Math.max(0, Math.min(1, t));
+    return x * x * (3 - 2 * x);
+  }
+
+  /**
+   * @param {1|2|3|4|5} act
+   * @param {number} visibility 0–1
+   */
+  _setActVisibility(act, visibility) {
+    const el = this._acts[act];
+    if (!el) return;
+    const stage = el.querySelector('[data-act-stage]') || el;
+    const v = Math.max(0, Math.min(1, visibility));
+
+    // Load intro owns Act-1 opacity until complete
+    if (act === 1 && !this._introDone) {
+      el.classList.toggle('is-active', true);
+      el.setAttribute('aria-hidden', 'false');
+      return;
+    }
+
+    stage.style.opacity = String(v);
+    stage.style.visibility = v < 0.02 ? 'hidden' : 'visible';
+    const drift = (1 - v) * (act === 2 ? 18 : 12);
+    stage.style.transform = `translate3d(0, ${drift}px, 0)`;
+    el.classList.toggle('is-active', v > 0.2);
+    el.setAttribute('aria-hidden', v < 0.15 ? 'true' : 'false');
   }
 
   _initStickyHeader() {
     if (!this._header) return;
 
     const onScroll = () => {
-      const scrolled = window.scrollY > 12;
+      const scrolled = window.scrollY > 8;
       this._header.classList.toggle('is-scrolled', scrolled);
     };
 
@@ -142,7 +212,6 @@ export class OverlayUI {
 
   _setNavOpen(open) {
     if (!this._header || !this._navToggle) return;
-    // Idempotent — avoids redundant Lenis start/stop calls from anchor/resize handlers.
     if (this._navOpen === open) return;
     this._navOpen = open;
 
@@ -169,7 +238,6 @@ export class OverlayUI {
       if (event.key === 'Escape') this._setNavOpen(false);
     });
 
-    // Close the overlay whenever we cross into the desktop layout (resize / rotate).
     const desktopMq = window.matchMedia('(min-width: 768px)');
     const onBreakpoint = (event) => {
       if (event.matches) this._setNavOpen(false);
@@ -205,7 +273,7 @@ export class OverlayUI {
       if (!form.checkValidity()) {
         form.reportValidity();
         if (status) {
-          status.textContent = 'Please complete all required fields.';
+          status.textContent = 'Please complete the required fields.';
           status.classList.add('is-error');
         }
         return;
@@ -217,13 +285,7 @@ export class OverlayUI {
       const subject = String(data.get('subject') || '').trim();
       const message = String(data.get('message') || '').trim();
 
-      const body = [
-        `Name: ${name}`,
-        `Email: ${email}`,
-        '',
-        message,
-      ].join('\n');
-
+      const body = [`Name: ${name}`, `Email: ${email}`, '', message].join('\n');
       const mailto = `mailto:hello@nexus3d.studio?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
       if (status) {
@@ -242,11 +304,11 @@ export class OverlayUI {
         if (this._disposed) return;
         form.reset();
         if (status) {
-          status.textContent = 'Transmission ready — finish sending in your mail client.';
+          status.textContent = 'Ready — finish sending in your mail client.';
         }
         if (submit) {
           submit.disabled = false;
-          submit.textContent = 'Send Transmission';
+          submit.textContent = 'Send message';
         }
       }, 600);
     });
@@ -262,10 +324,10 @@ export class OverlayUI {
   destroy() {
     this._disposed = true;
     this._setNavOpen(false);
-    this._tiltCleanups.forEach((fn) => fn());
-    this._tiltCleanups = [];
-    this._triggers.forEach((t) => t.kill());
-    this._triggers = [];
+    this._unsubscribeProgress?.();
+    this._unsubscribeProgress = null;
+    this._introTween?.kill();
+    this._introTween = null;
     this._listeners.forEach((fn) => fn());
     this._listeners = [];
   }

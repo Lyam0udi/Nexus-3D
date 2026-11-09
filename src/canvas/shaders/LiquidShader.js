@@ -2,8 +2,8 @@ import * as THREE from 'three';
 
 const NOISE_MAP_PATH = '/assets/noise.png';
 
-/** Default optical base distortion when the cursor is idle. */
-export const BASE_DISTORTION = 0.12;
+/** Near-still base — scroll drives drama only in Act 3. */
+export const BASE_DISTORTION = 0.006;
 
 /**
  * Shared liquid uniforms driven by the frame loop / mouse inertia.
@@ -146,11 +146,12 @@ ${SIMPLEX_NOISE_GLSL}
 #include <begin_vertex>
 {
   float freq = uNoiseFrequency;
-  float amp = uDistortion * (1.0 + uMouseVelocity * 2.5);
-  vec3 noiseCoord = transformed * freq + vec3(uTime * 0.35, uTime * 0.22, uTime * 0.18);
+  // Soft optical breath — never carnival jelly unless uDistortion is surging
+  float amp = uDistortion * (1.0 + uMouseVelocity * 0.55);
+  vec3 noiseCoord = transformed * freq + vec3(uTime * 0.08, uTime * 0.05, uTime * 0.04);
   float n = snoise(noiseCoord);
-  float n2 = snoise(noiseCoord * 1.7 + vec3(uMouse * 0.8, uTime * 0.1));
-  float displacement = (n * 0.65 + n2 * 0.35) * amp;
+  float n2 = snoise(noiseCoord * 1.35 + vec3(uMouse * 0.25, uTime * 0.03));
+  float displacement = (n * 0.7 + n2 * 0.3) * amp;
   transformed += normalize(objectNormal) * displacement;
   vLiquidPos = transformed;
 }
@@ -179,18 +180,20 @@ varying vec3 vLiquidPos;
   vec3 micro = texture2D(uNoiseMap, noiseUv).rgb;
   float grain = (micro.r + micro.g + micro.b) / 3.0;
 
-  // Microscopic roughness flecks
-  outgoingLight *= mix(0.92, 1.06, grain);
+  // Microscopic roughness flecks — keep subtle so glass stays readable
+  outgoingLight *= mix(0.96, 1.04, grain);
 
-  // Fresnel-weighted chromatic edge tint (liquid glass fringe)
+  // Edge tint only when distortion surges (keeps Acts 1–2 optically clean)
   float fresnel = pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 2.8);
-  float fringe = fresnel * (0.35 + uDistortion * 1.2 + uMouseVelocity * 0.8);
-  vec3 chroma = vec3(
-    texture2D(uNoiseMap, noiseUv + vec2(0.012, 0.0)).r,
-    texture2D(uNoiseMap, noiseUv).g,
-    texture2D(uNoiseMap, noiseUv - vec2(0.012, 0.0)).b
-  );
-  outgoingLight += chroma * fringe * vec3(0.55, 0.85, 1.15);
+  float fringe = fresnel * (uDistortion * 1.1 + uMouseVelocity * 0.15);
+  if (fringe > 0.002) {
+    vec3 chroma = vec3(
+      texture2D(uNoiseMap, noiseUv + vec2(0.008, 0.0)).r,
+      texture2D(uNoiseMap, noiseUv).g,
+      texture2D(uNoiseMap, noiseUv - vec2(0.008, 0.0)).b
+    );
+    outgoingLight += chroma * fringe * vec3(0.78, 0.7, 0.58);
+  }
 }
 #include <opaque_fragment>
 `,
@@ -199,6 +202,6 @@ varying vec3 vLiquidPos;
     material.userData.shader = shader;
   };
 
-  material.customProgramCacheKey = () => 'nexus-liquid-noise-v1';
+  material.customProgramCacheKey = () => 'nexus-liquid-noise-v3';
   material.needsUpdate = true;
 }

@@ -13,7 +13,7 @@
   <polygon points="10,21 16,14.5 14,25.5 9,23" fill="#A8A098"/>
   <polygon points="21,9.5 24.5,15.5 22,21 16,14.5" fill="#B8A078"/>
   <polygon points="16,14.5 22,21 23,23 18,25.5" fill="#8A744C"/>
-  <path d="M21 9.5 L24 15.5" stroke="#5DDEA8" stroke-width="0.9" stroke-linecap="round"/>
+  <path d="M21 9.5 L24 15.5" stroke="#C8B89A" stroke-width="0.9" stroke-linecap="round"/>
   <path
     d="M16 12 L19 13.75 V17.25 L16 19 L13 17.25 V13.75 Z"
     fill="#060608"

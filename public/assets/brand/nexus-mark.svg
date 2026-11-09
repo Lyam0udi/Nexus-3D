@@ -30,7 +30,7 @@
   <polygon points="42,16 50,28 44,40 32,26" fill="url(#facetRight)"/>
   <polygon points="50,28 52,34 46,46 44,40" fill="#A89068"/>
   <polygon points="32,26 44,40 46,46 36,50" fill="#8A744C"/>
-  <path d="M42 16 L48 26 L46 30" stroke="#5DDEA8" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
+  <path d="M42 16 L48 26 L46 30" stroke="#C8B89A" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
   <path
     d="M32 22 L38 25.5 V32.5 L32 36 L26 32.5 V25.5 Z"
     fill="#060608"

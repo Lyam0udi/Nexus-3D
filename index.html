@@ -85,7 +85,7 @@
               "url": "https://nexus-3-d-three.vercel.app/assets/brand/nexus-mark.svg"
             },
             "sameAs": [
-              "https://github.com",
+              "https://github.com/Lyam0udi/Nexus-3D",
               "https://x.com",
               "https://www.linkedin.com"
             ]
@@ -143,7 +143,7 @@
                 "name": "How does the scroll-driven camera choreography work?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "A master GSAP ScrollTrigger timeline maps page scroll to four acts: macro close-up, a 120° orbital sweep, a dive into the mesh with noise warp, then a pass through the core into the terminal interface."
+                  "text": "A master GSAP ScrollTrigger timeline maps page scroll to five acts: square presence, a 120° orbit, a threshold mode-shift into a digital interior, then emergence of the architectural core in the void before contact."
                 }
               },
               {
@@ -161,17 +161,16 @@
     </script>
   </head>
   <body>
-    <canvas id="webgl-canvas" class="webgl-canvas"></canvas>
+    <canvas id="webgl-canvas" class="webgl-canvas" aria-hidden="true"></canvas>
 
-    <!-- Sticky site chrome — lives above scroll acts -->
     <header class="site-header" id="site-header">
       <div class="site-header__inner">
         <a href="#act-1" class="site-logo interactive" aria-label="NEXUS // 3D — Home">
           <img
             class="site-logo__mark"
             src="/assets/brand/nexus-mark.svg"
-            width="28"
-            height="28"
+            width="24"
+            height="24"
             alt=""
             decoding="async"
           />
@@ -182,19 +181,14 @@
         </a>
 
         <nav class="site-nav" id="site-nav" aria-label="Primary">
-          <a href="#act-2" class="interactive" data-nav-link>Features</a>
-          <a href="#act-3" class="interactive" data-nav-link>Architecture</a>
-          <a href="#act-4" class="interactive" data-nav-link>Terminal</a>
-          <a href="#faq" class="interactive" data-nav-link>FAQ</a>
-          <a href="#contact" class="interactive" data-nav-link>Contact</a>
+          <a href="#act-2" class="interactive" data-nav-link>Orbit</a>
+          <a href="#act-4" class="interactive" data-nav-link>System</a>
+          <a href="#act-5" class="interactive" data-nav-link>Core</a>
+          <a href="#coda" class="interactive" data-nav-link>Contact</a>
         </nav>
 
         <div class="site-header__actions">
-          <span class="status-pill interactive" id="webgl-status" role="status">
-            <span class="status-pill__dot" aria-hidden="true"></span>
-            <span class="status-pill__label">WebGL · LIVE</span>
-          </span>
-          <a href="#contact" class="btn btn--nav interactive">Engage</a>
+          <a href="#coda" class="btn btn--nav interactive">Engage</a>
           <button
             type="button"
             class="nav-toggle interactive"
@@ -211,262 +205,140 @@
     </header>
 
     <div id="app">
-      <!-- ═══ ACT 1 — Hero ═══ -->
-      <section id="act-1" class="act act--hero" aria-label="Hero">
-        <div class="act__content act__content--hero">
-          <p class="eyebrow mono">SCROLL-DRIVEN EXPERIENCE</p>
-          <h1 class="display-headline">NEXUS // 3D</h1>
-          <p class="hero-lede">
-            A liquid-glass sculpture choreographed by scroll — four cinematic acts inside one continuous WebGL engine.
-          </p>
-          <div class="hero-actions">
-            <a class="btn btn--primary interactive" href="#act-2">Explore Systems</a>
-            <a class="btn btn--ghost interactive" href="#contact">Start a Project</a>
-          </div>
-        </div>
-
-        <div class="scroll-indicator" aria-hidden="true">
-          <span class="scroll-indicator__label mono">Scroll</span>
-          <span class="scroll-indicator__line"></span>
-        </div>
-      </section>
-
-      <!-- ═══ ACT 2 — Features ═══ -->
-      <section id="act-2" class="act act--features" aria-label="Features">
-        <div class="act__inner">
-          <header class="section-header">
-            <p class="eyebrow mono">01 — FEATURES</p>
-            <h2 class="section-title">Optical systems</h2>
-            <p class="section-lede">
-              Precision materials, orbital camera motion, and shader warp — tuned as one light path.
+      <!-- Film reel — Scrubbed camera map lives here; coda scrolls after -->
+      <div id="film" class="film">
+        <!-- ═══ ACT 1 — Macro ═══ -->
+        <section id="act-1" class="act act--hero is-active" aria-label="Opening">
+          <div class="act-scrim act-scrim--hero" aria-hidden="true"></div>
+          <div class="act__content act__content--hero" data-act-stage>
+            <h1 class="display-headline">NEXUS // 3D</h1>
+            <p class="hero-lede">
+              A glass square in the void. Orbit it, cross the threshold, then emerge beyond the system.
             </p>
-          </header>
-
-          <div class="glass-grid">
-            <article class="glass-card interactive" data-tilt tabindex="0">
-              <span class="glass-card__index mono">01</span>
-              <h3 class="glass-card__title">Physical Materials</h3>
-              <p class="glass-card__body">
-                MeshPhysicalMaterial with transmission, IOR, and reflectivity tuned for liquid glass refraction.
-              </p>
-            </article>
-
-            <article class="glass-card interactive" data-tilt tabindex="0">
-              <span class="glass-card__index mono">02</span>
-              <h3 class="glass-card__title">Scroll Orbit</h3>
-              <p class="glass-card__body">
-                A 120° camera sweep locked to Lenis momentum and a master GSAP ScrollTrigger timeline.
-              </p>
-            </article>
-
-            <article class="glass-card interactive" data-tilt tabindex="0">
-              <span class="glass-card__index mono">03</span>
-              <h3 class="glass-card__title">Noise Warp</h3>
-              <p class="glass-card__body">
-                Custom GLSL displacement that surges as the camera dives into the mesh core.
-              </p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <!-- ═══ ACT 3 — Architecture ═══ -->
-      <section id="act-3" class="act act--architecture" aria-label="Architecture">
-        <div class="act__inner">
-          <header class="section-header section-header--split">
-            <div>
-              <p class="eyebrow mono">02 — ARCHITECTURE</p>
-              <h2 class="section-title">Signal readout</h2>
-            </div>
-            <p class="section-lede section-lede--right">
-              Live metrics from the render pipeline — capped pixel ratio, physical transmission, four locked acts.
-            </p>
-          </header>
-
-          <div class="metrics-panel glass" id="metrics-panel">
-            <div class="metric" data-metric data-target="60" data-suffix=" fps">
-              <span class="metric__value mono">
-                <span class="metric__num">0</span><span class="metric__suffix"> fps</span>
-              </span>
-              <span class="metric__label">Target Frame Rate</span>
-            </div>
-            <div class="metric" data-metric data-target="2" data-suffix="×">
-              <span class="metric__value mono">
-                <span class="metric__num">0</span><span class="metric__suffix">×</span>
-              </span>
-              <span class="metric__label">Pixel Ratio Cap</span>
-            </div>
-            <div class="metric" data-metric data-target="4" data-suffix="">
-              <span class="metric__value mono">
-                <span class="metric__num">0</span><span class="metric__suffix"></span>
-              </span>
-              <span class="metric__label">Scroll Acts</span>
-            </div>
-            <div class="metric" data-metric data-target="92" data-suffix="%">
-              <span class="metric__value mono">
-                <span class="metric__num">0</span><span class="metric__suffix">%</span>
-              </span>
-              <span class="metric__label">Transmission</span>
+            <div class="hero-actions">
+              <a class="btn btn--primary interactive" href="#act-2">Begin the orbit</a>
+              <a class="btn btn--ghost interactive" href="#coda">Start a project</a>
             </div>
           </div>
 
-          <ul class="arch-notes" aria-label="Architecture highlights">
-            <li class="arch-note">
-              <span class="arch-note__key mono">Stack</span>
-              <span class="arch-note__val">Vite · Three.js · GSAP · Lenis</span>
-            </li>
-            <li class="arch-note">
-              <span class="arch-note__key mono">Assets</span>
-              <span class="arch-note__val">Local GLB + HDRI only</span>
-            </li>
-            <li class="arch-note">
-              <span class="arch-note__key mono">Teardown</span>
-              <span class="arch-note__val">Full geometry &amp; material disposal</span>
-            </li>
-          </ul>
-        </div>
-      </section>
+          <div class="scroll-indicator" aria-hidden="true">
+            <span class="scroll-indicator__label mono">Scroll</span>
+            <span class="scroll-indicator__line"></span>
+          </div>
+        </section>
 
-      <!-- ═══ ACT 4 — Terminal / CTA ═══ -->
-      <section id="act-4" class="act act--terminal" aria-label="Terminal">
-        <div class="act__inner act__inner--terminal">
-          <header class="section-header section-header--center">
-            <p class="eyebrow mono">03 — TERMINAL</p>
-            <h2 class="section-title">Enter the core</h2>
-            <p class="section-lede">
-              The camera passes through the mesh. The interface becomes the product.
-            </p>
-          </header>
+        <!-- ═══ ACT 2 — Orbit (study) ═══ -->
+        <section id="act-2" class="act act--orbit" aria-label="Orbit" aria-hidden="true">
+          <div class="act-scrim act-scrim--side" aria-hidden="true"></div>
+          <div class="act__inner act__inner--orbit" data-act-stage>
+            <p class="hud-kicker mono">Sculpture cinema</p>
+            <ul class="hud-list" aria-label="Meaning">
+              <li class="hud-item" data-hud-item>
+                <span class="hud-item__index mono">01</span>
+                <div class="hud-item__copy">
+                  <h2 class="hud-item__title">Silhouette</h2>
+                  <p class="hud-item__body">A square you can read — edges, mass, intention.</p>
+                </div>
+              </li>
+              <li class="hud-item" data-hud-item>
+                <span class="hud-item__index mono">02</span>
+                <div class="hud-item__copy">
+                  <h2 class="hud-item__title">Orbit</h2>
+                  <p class="hud-item__body">You walk around it. Scroll directs the camera.</p>
+                </div>
+              </li>
+              <li class="hud-item" data-hud-item>
+                <span class="hud-item__index mono">03</span>
+                <div class="hud-item__copy">
+                  <h2 class="hud-item__title">Crossing</h2>
+                  <p class="hud-item__body">At the peak — leave the void. Enter the system. Then emerge.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </section>
 
-          <div class="terminal glass">
-            <div class="terminal__chrome">
-              <span class="terminal__dots" aria-hidden="true">
-                <i></i><i></i><i></i>
-              </span>
-              <span class="terminal__title mono">nexus@core — zsh</span>
+        <!-- ═══ ACT 3 — Threshold (doorway, not zoom) ═══ -->
+        <section id="act-3" class="act act--dive" aria-label="Threshold" aria-hidden="true">
+          <div class="act__inner act__inner--dive" data-act-stage>
+            <p class="dive-whisper">The threshold</p>
+            <p class="dive-sub mono">Hold — then cross</p>
+          </div>
+        </section>
+
+        <!-- ═══ ACT 4 — Digital system interior ═══ -->
+        <section id="act-4" class="act act--terminal" aria-label="System" aria-hidden="true">
+          <div class="act-scrim act-scrim--terminal" aria-hidden="true"></div>
+          <div class="act__inner act__inner--terminal" data-act-stage>
+            <div class="terminal-card">
+              <p class="terminal-arrival mono">Inside the system</p>
+              <h2 class="terminal-headline">You crossed</h2>
+              <p class="terminal-lede">
+                The square was the door.<br />
+                This is the room.
+              </p>
+              <p class="terminal-panel__line mono">
+                <span class="terminal-panel__prompt">›</span> system online
+              </p>
+              <div class="terminal-panel__actions">
+                <a class="btn btn--primary interactive" href="#act-5">Continue to core</a>
+                <a class="btn btn--ghost interactive" href="#coda">Skip to contact</a>
+              </div>
             </div>
-            <div class="terminal__body">
-              <p class="terminal__line mono">
-                <span class="terminal__prompt">›</span> nexus init --experience scroll
-              </p>
-              <p class="terminal__line mono terminal__line--dim">
-                Engine online. Four acts locked. Awaiting input.
-              </p>
-              <p class="terminal__cta-label mono">Ready to dive through the core?</p>
-              <div class="terminal__actions">
+          </div>
+        </section>
+
+        <!-- ═══ ACT 5 — Emergence (GLB from the universe) ═══ -->
+        <section id="act-5" class="act act--emergence" aria-label="Emergence" aria-hidden="true">
+          <div class="act__inner act__inner--emergence" data-act-stage>
+            <div class="terminal-card">
+              <p class="terminal-arrival mono">Out of the system</p>
+              <h2 class="terminal-headline">The core remains</h2>
+              <p class="terminal-lede">You left the room.</p>
+              <div class="terminal-panel__actions">
                 <a
                   class="btn btn--primary interactive"
-                  href="https://github.com"
+                  href="https://github.com/Lyam0udi/Nexus-3D"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  View Repository
+                  View repository
                 </a>
-                <a class="btn btn--ghost interactive" href="#act-1">Restart Sequence</a>
+                <a class="btn btn--ghost interactive" href="#coda">Commission a build</a>
               </div>
             </div>
-            <footer class="terminal__footer">
-              <ul class="social-links">
-                <li>
-                  <a
-                    class="interactive"
-                    href="https://github.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    >GitHub</a
-                  >
-                </li>
-                <li>
-                  <a
-                    class="interactive"
-                    href="https://x.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    >X</a
-                  >
-                </li>
-                <li>
-                  <a
-                    class="interactive"
-                    href="https://www.linkedin.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    >LinkedIn</a
-                  >
-                </li>
-              </ul>
-              <p class="repo-meta mono">nexus-3d · vite · three.js · gsap · lenis</p>
-            </footer>
           </div>
+        </section>
+      </div>
+
+      <!-- Digital interior veil — fades in at threshold peak -->
+      <div id="system-interior" class="system-interior" aria-hidden="true">
+        <div class="system-interior__grid" aria-hidden="true"></div>
+        <div class="system-interior__scan" aria-hidden="true"></div>
+        <div class="system-interior__rail system-interior__rail--left mono" aria-hidden="true">
+          <span>SIG // 01</span>
+          <span>CORE LOCKED</span>
+          <span>VOID → SYS</span>
         </div>
-      </section>
-
-      <!-- ═══ FAQ (SEO + GEO answer surface) ═══ -->
-      <section id="faq" class="act act--faq" aria-label="FAQ">
-        <div class="act__inner act__inner--faq">
-          <header class="section-header">
-            <p class="eyebrow mono">04 — FAQ</p>
-            <h2 class="section-title">Clear answers</h2>
-            <p class="section-lede">
-              Straight facts about the experience, the stack, and how to engage Nexus Studio.
-            </p>
-          </header>
-
-          <div class="faq-list">
-            <details class="faq-item glass interactive" open>
-              <summary class="faq-item__q">What is NEXUS // 3D?</summary>
-              <p class="faq-item__a">
-                NEXUS // 3D is a liquid-glass WebGL sculpture choreographed by scroll. It presents
-                four cinematic acts inside one continuous engine for immersive product launches.
-              </p>
-            </details>
-
-            <details class="faq-item glass interactive">
-              <summary class="faq-item__q">What technology powers NEXUS // 3D?</summary>
-              <p class="faq-item__a">
-                The experience runs on Vite with vanilla JavaScript modules, Three.js for WebGL
-                rendering, GSAP ScrollTrigger for camera choreography, and Lenis for momentum-based
-                smooth scrolling.
-              </p>
-            </details>
-
-            <details class="faq-item glass interactive">
-              <summary class="faq-item__q">How does the scroll-driven camera choreography work?</summary>
-              <p class="faq-item__a">
-                A master GSAP ScrollTrigger timeline maps page scroll to four acts: macro close-up,
-                a 120° orbital sweep, a dive into the mesh with noise warp, then a pass through the
-                core into the terminal interface.
-              </p>
-            </details>
-
-            <details class="faq-item glass interactive">
-              <summary class="faq-item__q">How do I start a project with Nexus Studio?</summary>
-              <p class="faq-item__a">
-                Use the
-                <a class="interactive" href="#contact">contact form</a>
-                or email
-                <a class="interactive" href="mailto:hello@nexus3d.studio">hello@nexus3d.studio</a>.
-                Share your product, launch goals, and desired feeling — Nexus Studio replies within
-                two business days.
-              </p>
-            </details>
-          </div>
+        <div class="system-interior__rail system-interior__rail--right mono" aria-hidden="true">
+          <span>ACT 04</span>
+          <span>INTERIOR</span>
+          <span>HOLD</span>
         </div>
-      </section>
+      </div>
 
-      <!-- ═══ CONTACT ═══ -->
-      <section id="contact" class="act act--contact" aria-label="Contact">
-        <div class="act__inner act__inner--contact">
-          <header class="section-header">
-            <p class="eyebrow mono">05 — CONTACT</p>
-            <h2 class="section-title">Build the next sequence</h2>
-            <p class="section-lede">
-              Tell us about your product, launch, or immersive brief — we reply within two business days.
-            </p>
-          </header>
+      <!-- ═══ Coda — compact FAQ + contact (after the film) ═══ -->
+      <section id="coda" class="coda" aria-label="Contact and FAQ">
+        <div class="coda__inner">
+          <div class="coda__contact" id="contact">
+            <header class="coda__header">
+              <h2 class="coda__title">Build what comes after</h2>
+              <p class="coda__lede">
+                Immersive launches, optical UI, scroll cinema — we reply within two business days.
+              </p>
+            </header>
 
-          <div class="contact-layout">
-            <form class="contact-form glass" id="contact-form" novalidate>
+            <form class="contact-form" id="contact-form" novalidate>
               <div class="contact-form__row">
                 <label class="field">
                   <span class="field__label mono">Name</span>
@@ -512,160 +384,104 @@
                   class="field__input field__input--area interactive"
                   name="message"
                   id="contact-message"
-                  rows="5"
+                  rows="4"
                   required
-                  placeholder="Timeline, goals, and the feeling you want the experience to carry…"
+                  placeholder="Timeline, goals, and the feeling you want…"
                 ></textarea>
               </label>
 
               <div class="contact-form__footer">
                 <button type="submit" class="btn btn--primary interactive" id="contact-submit">
-                  Send Transmission
+                  Send message
                 </button>
+                <a class="contact-direct interactive" href="mailto:hello@nexus3d.studio"
+                  >hello@nexus3d.studio</a
+                >
                 <p class="contact-form__status mono" id="contact-status" role="status" aria-live="polite"></p>
               </div>
             </form>
-
-            <aside class="contact-aside">
-              <div class="contact-card glass">
-                <p class="contact-card__label mono">Direct line</p>
-                <a class="contact-card__link interactive" href="mailto:hello@nexus3d.studio"
-                  >hello@nexus3d.studio</a
-                >
-              </div>
-              <div class="contact-card glass">
-                <p class="contact-card__label mono">Studio hours</p>
-                <p class="contact-card__text">Mon–Fri · 09:00–18:00 UTC</p>
-              </div>
-              <div class="contact-card glass">
-                <p class="contact-card__label mono">Channels</p>
-                <ul class="social-links social-links--stack">
-                  <li>
-                    <a
-                      class="interactive"
-                      href="https://github.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      >GitHub</a
-                    >
-                  </li>
-                  <li>
-                    <a
-                      class="interactive"
-                      href="https://x.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      >X / Twitter</a
-                    >
-                  </li>
-                  <li>
-                    <a
-                      class="interactive"
-                      href="https://www.linkedin.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      >LinkedIn</a
-                    >
-                  </li>
-                </ul>
-              </div>
-            </aside>
           </div>
 
+          <div class="coda__faq" id="faq">
+            <h2 class="coda__faq-title mono">FAQ</h2>
+            <div class="faq-list">
+              <details class="faq-item interactive" open>
+                <summary class="faq-item__q">What is NEXUS // 3D?</summary>
+                <p class="faq-item__a">
+                  A liquid-glass WebGL sculpture choreographed by scroll — five cinematic acts inside one continuous engine for immersive product launches.
+                </p>
+              </details>
+
+              <details class="faq-item interactive">
+                <summary class="faq-item__q">What powers it?</summary>
+                <p class="faq-item__a">
+                  Vite, vanilla ES modules, Three.js, GSAP ScrollTrigger, and Lenis — no React rewrite, no secret env required to run the demo.
+                </p>
+              </details>
+
+              <details class="faq-item interactive">
+                <summary class="faq-item__q">How does the camera choreography work?</summary>
+                <p class="faq-item__a">
+                  A master scrubbed timeline maps scroll to five acts: square presence, orbit, threshold into a digital interior, then emergence of the architectural core before contact.
+                </p>
+              </details>
+
+              <details class="faq-item interactive">
+                <summary class="faq-item__q">How do I start a project?</summary>
+                <p class="faq-item__a">
+                  Use the form above or email
+                  <a class="interactive" href="mailto:hello@nexus3d.studio">hello@nexus3d.studio</a>.
+                  Share product, goals, and desired feeling — reply within two business days.
+                </p>
+              </details>
+            </div>
+          </div>
         </div>
       </section>
 
-      <!-- ═══ SITE FOOTER ═══ -->
       <footer class="site-footer" id="site-footer">
-        <div class="site-footer__glow" aria-hidden="true"></div>
         <div class="site-footer__inner">
-          <div class="site-footer__brand-block">
-            <a href="#act-1" class="site-logo site-logo--footer interactive" aria-label="NEXUS // 3D — Home">
-              <img
-                class="site-logo__mark"
-                src="/assets/brand/nexus-mark.svg"
-                width="36"
-                height="36"
-                alt=""
-                decoding="async"
-              />
-              <span class="site-logo__text">
-                <span class="site-logo__name">NEXUS</span>
-                <span class="site-logo__tag mono">// 3D</span>
-              </span>
-            </a>
-            <p class="site-footer__lede">
-              Liquid-glass WebGL experiences — scroll-driven, optically tuned, built for product launches.
-            </p>
-          </div>
+          <a href="#act-1" class="site-logo site-logo--footer interactive" aria-label="NEXUS // 3D — Home">
+            <img
+              class="site-logo__mark"
+              src="/assets/brand/nexus-mark.svg"
+              width="28"
+              height="28"
+              alt=""
+              decoding="async"
+            />
+            <span class="site-logo__text">
+              <span class="site-logo__name">NEXUS</span>
+              <span class="site-logo__tag mono">// 3D</span>
+            </span>
+          </a>
 
-          <nav class="site-footer__nav" aria-label="Footer">
-            <div class="site-footer__col">
-              <p class="site-footer__heading mono">Navigate</p>
-              <ul class="site-footer__links">
-                <li><a class="interactive" href="#act-2">Features</a></li>
-                <li><a class="interactive" href="#act-3">Architecture</a></li>
-                <li><a class="interactive" href="#act-4">Terminal</a></li>
-                <li><a class="interactive" href="#faq">FAQ</a></li>
-                <li><a class="interactive" href="#contact">Contact</a></li>
-              </ul>
-            </div>
-            <div class="site-footer__col">
-              <p class="site-footer__heading mono">Connect</p>
-              <ul class="site-footer__links">
-                <li>
-                  <a
-                    class="interactive"
-                    href="https://github.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    >GitHub</a
-                  >
-                </li>
-                <li>
-                  <a class="interactive" href="https://x.com" target="_blank" rel="noopener noreferrer"
-                    >X / Twitter</a
-                  >
-                </li>
-                <li>
-                  <a
-                    class="interactive"
-                    href="https://www.linkedin.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    >LinkedIn</a
-                  >
-                </li>
-                <li>
-                  <a class="interactive" href="mailto:hello@nexus3d.studio">Email</a>
-                </li>
-              </ul>
-            </div>
-            <div class="site-footer__col site-footer__col--stack">
-              <p class="site-footer__heading mono">Stack</p>
-              <p class="site-footer__stack mono">Vite · Three.js · GSAP · Lenis</p>
-              <a class="btn btn--ghost btn--footer interactive" href="#contact">Start a Project</a>
-            </div>
+          <nav class="site-footer__links" aria-label="Footer">
+            <a class="interactive" href="#act-2">Orbit</a>
+            <a class="interactive" href="#act-4">System</a>
+            <a class="interactive" href="#act-5">Core</a>
+            <a class="interactive" href="#coda">Contact</a>
+            <a
+              class="interactive"
+              href="https://github.com/Lyam0udi/Nexus-3D"
+              target="_blank"
+              rel="noopener noreferrer"
+              >GitHub</a
+            >
           </nav>
 
-          <div class="site-footer__bar">
-            <p class="site-footer__copy">
-              © <span id="footer-year">2026</span> Nexus Studio. All rights reserved.
-              <span class="site-footer__sep" aria-hidden="true">·</span>
-              Built by
-              <a
-                class="site-footer__credit interactive"
-                href="https://www.dywandev.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                >Dywan Dev</a
-              >
-            </p>
-            <p class="site-footer__signal mono">
-              <span class="site-footer__signal-dot" aria-hidden="true"></span>
-              Engine online
-            </p>
-          </div>
+          <p class="site-footer__copy">
+            © <span id="footer-year">2026</span> Nexus Studio
+            <span class="site-footer__sep" aria-hidden="true">·</span>
+            Built by
+            <a
+              class="site-footer__credit interactive"
+              href="https://www.dywandev.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Dywan Dev</a
+            >
+          </p>
         </div>
       </footer>
     </div>

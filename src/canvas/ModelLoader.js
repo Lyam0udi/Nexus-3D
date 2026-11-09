@@ -9,26 +9,31 @@ import {
 const HDRI_PATH = '/assets/studio.hdr';
 const MODEL_PATH = '/assets/core.glb';
 
-/** Architectural glass / liquid-chrome optical settings. */
+/**
+ * Dark cool glass — silhouette in the void, never chalk-white.
+ * Liquid warp stays off so edges stay architectural.
+ */
 const PHYSICAL_MATERIAL = {
-  color: 0xf2f6ff,
-  roughness: 0.08,
-  metalness: 0.15,
-  transmission: 0.92,
-  ior: 1.52,
+  color: 0x3d4652,
+  roughness: 0.12,
+  metalness: 0.28,
+  transmission: 0.62,
+  ior: 1.48,
   reflectivity: 0.9,
-  thickness: 1.2,
-  clearcoat: 1.0,
-  clearcoatRoughness: 0.1,
-  envMapIntensity: 1.4,
+  thickness: 1.1,
+  clearcoat: 0.85,
+  clearcoatRoughness: 0.14,
+  envMapIntensity: 1.15,
   transparent: true,
   side: THREE.DoubleSide,
+  attenuationColor: new THREE.Color(0x1c222c),
+  attenuationDistance: 1.6,
 };
 
 /**
- * Loads studio HDRI environment lighting and the central GLTF sculpture,
- * applying MeshPhysicalMaterial glass/chrome optics. Falls back to a
- * high-density procedural mesh if the GLB is missing or fails.
+ * Dual sculptures:
+ * - Square glass volume — Acts 1–3 cinema
+ * - Architectural `core.glb` — Act 5 emergence only
  */
 export class ModelLoader {
   /**
@@ -38,7 +43,10 @@ export class ModelLoader {
   constructor(scene, renderer) {
     this.scene = scene;
     this.renderer = renderer;
+    /** @type {THREE.Object3D | null} */
     this.sculpture = null;
+    /** @type {THREE.Object3D | null} */
+    this.emergence = null;
     this._envMap = null;
     this._noiseMap = null;
     this.liquidUniforms = createLiquidUniforms();
@@ -47,17 +55,24 @@ export class ModelLoader {
   }
 
   /**
-   * Load HDRI, lights, and centerpiece. Resolves with the mounted sculpture.
-   * @returns {Promise<THREE.Object3D>}
+   * @returns {Promise<{ sculpture: THREE.Object3D, emergence: THREE.Object3D | null }>}
    */
   async load() {
     await this._loadEnvironment();
     await this._loadLiquidNoise();
     this._setupLights();
-    this.sculpture = await this._loadSculpture();
+
+    this.sculpture = this._createSquareVolume();
     this.sculpture.position.set(0, 0, 0);
     this.scene.add(this.sculpture);
-    return this.sculpture;
+
+    this.emergence = await this._loadEmergenceGlb();
+    if (this.emergence) {
+      this.emergence.visible = false;
+      this.scene.add(this.emergence);
+    }
+
+    return { sculpture: this.sculpture, emergence: this.emergence };
   }
 
   async _loadLiquidNoise() {
@@ -65,66 +80,226 @@ export class ModelLoader {
       this._noiseMap = await loadNoiseMap();
       this.liquidUniforms.uNoiseMap.value = this._noiseMap;
     } catch (err) {
-      console.warn('[ModelLoader] noise.png load failed; liquid grain disabled.', err);
+      console.warn('[ModelLoader] noise.png load failed; generating procedural grain.', err);
+      this._noiseMap = this._createProceduralNoise();
+      this.liquidUniforms.uNoiseMap.value = this._noiseMap;
     }
   }
 
-  /** @returns {THREE.MeshPhysicalMaterial} */
-  createPhysicalMaterial() {
-    const material = new THREE.MeshPhysicalMaterial({ ...PHYSICAL_MATERIAL });
-    applyLiquidShader(material, this.liquidUniforms);
+  _createProceduralNoise() {
+    const size = 128;
+    const data = new Uint8Array(size * size * 4);
+    for (let i = 0; i < size * size; i++) {
+      const n = Math.floor(Math.random() * 255);
+      const o = i * 4;
+      data[o] = n;
+      data[o + 1] = Math.floor(n * 0.92 + Math.random() * 20);
+      data[o + 2] = Math.floor(n * 0.85 + Math.random() * 30);
+      data[o + 3] = 255;
+    }
+    const texture = new THREE.DataTexture(data, size, size);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.needsUpdate = true;
+    return texture;
+  }
+
+  /**
+   * @param {object} [overrides]
+   * @param {{ liquid?: boolean }} [options]
+   * @returns {THREE.MeshPhysicalMaterial}
+   */
+  createPhysicalMaterial(overrides = {}, options = {}) {
+    const material = new THREE.MeshPhysicalMaterial({
+      ...PHYSICAL_MATERIAL,
+      ...overrides,
+    });
+    if (this._envMap) {
+      material.envMap = this._envMap;
+    }
+    if (options.liquid === true) {
+      applyLiquidShader(material, this.liquidUniforms);
+    }
     return material;
   }
 
   async _loadEnvironment() {
-    const loader = new RGBELoader();
-
     try {
-      const texture = await loader.loadAsync(HDRI_PATH);
-      texture.mapping = THREE.EquirectangularReflectionMapping;
-
-      const envMap = this._pmrem.fromEquirectangular(texture).texture;
-      this.scene.environment = envMap;
-      this._envMap = envMap;
-
-      // High-contrast studio exposure for physical glass / chrome read
-      this.renderer.toneMappingExposure = 1.4;
-
+      const texture = await new RGBELoader().loadAsync(HDRI_PATH);
+      this._envMap = this._pmrem.fromEquirectangular(texture).texture;
       texture.dispose();
+      this.scene.environment = this._envMap;
+      this.scene.background = new THREE.Color(0x060608);
     } catch (err) {
-      console.warn('[ModelLoader] HDRI load failed; continuing without environment map.', err);
+      console.warn('[ModelLoader] studio.hdr missing; using cool probe fallback.', err);
+      this._installProbeFallback();
     }
   }
 
+  _installProbeFallback() {
+    const size = 64;
+    const data = new Uint8Array(size * size * 4);
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const i = (y * size + x) * 4;
+        const v = (x + y) / (size * 2);
+        data[i] = Math.floor(70 + v * 50);
+        data[i + 1] = Math.floor(82 + v * 48);
+        data[i + 2] = Math.floor(98 + v * 55);
+        data[i + 3] = 255;
+      }
+    }
+    const tex = new THREE.DataTexture(data, size, size);
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    tex.needsUpdate = true;
+    this._envMap = this._pmrem.fromEquirectangular(tex).texture;
+    tex.dispose();
+    this.scene.environment = this._envMap;
+  }
+
   _setupLights() {
-    // Cool white key — high-contrast studio fill
-    const key = new THREE.DirectionalLight(0xe8f4ff, 2.4);
-    key.position.set(5, 7, 4);
+    const key = new THREE.DirectionalLight(0xf2ede4, 0.85);
+    key.position.set(4.5, 6, 3.5);
     key.name = 'nexus-key-light';
     this.scene.add(key);
 
-    // Deep violet rim — edge separation against obsidian void
-    const rim = new THREE.PointLight(0x4a148c, 12, 28, 2);
-    rim.position.set(-5, 1.5, -6);
-    rim.name = 'nexus-rim-light';
-    this.scene.add(rim);
-
-    // Soft cool fill so transmission never reads as pure black
-    const fill = new THREE.AmbientLight(0x1a1a28, 0.25);
+    const fill = new THREE.DirectionalLight(0xa89068, 0.35);
+    fill.position.set(-5, 2, -2);
     fill.name = 'nexus-fill-light';
     this.scene.add(fill);
+
+    const kick = new THREE.DirectionalLight(0xc8b89a, 0.4);
+    kick.position.set(-3, -2, 5);
+    kick.name = 'nexus-kick-light';
+    this.scene.add(kick);
+
+    const edge = new THREE.PointLight(0xc8b89a, 3.2, 22, 2);
+    edge.position.set(3.5, 0.5, -4);
+    edge.name = 'nexus-edge-light';
+    this.scene.add(edge);
   }
 
   /**
-   * @returns {Promise<THREE.Object3D>}
+   * Opening sculpture — two beveled square rings crossed, one inner crystal.
+   * Continuous machined surfaces, not a cage of boxes.
    */
-  async _loadSculpture() {
+  _createSquareVolume() {
+    const group = new THREE.Group();
+    group.name = 'nexus-portal';
+
+    const ringMat = this.createPhysicalMaterial(
+      {
+        color: 0x4a4034,
+        transmission: 0.12,
+        metalness: 0.74,
+        roughness: 0.22,
+        thickness: 0.4,
+        clearcoat: 0.55,
+        clearcoatRoughness: 0.2,
+        envMapIntensity: 0.8,
+        attenuationColor: new THREE.Color(0x1a1612),
+        attenuationDistance: 1.1,
+      },
+      { liquid: false },
+    );
+
+    const crystalMat = this.createPhysicalMaterial(
+      {
+        color: 0x2a241c,
+        transmission: 0.06,
+        metalness: 0.55,
+        roughness: 0.24,
+        thickness: 0.3,
+        clearcoat: 0.35,
+        envMapIntensity: 0.65,
+        emissive: new THREE.Color(0xc8b89a),
+        emissiveIntensity: 0.22,
+      },
+      { liquid: false },
+    );
+
+    const ringGeo = this._squareRingGeometry(1.15, 0.62, 0.42);
+
+    const ringA = new THREE.Mesh(ringGeo, ringMat);
+    ringA.rotation.set(0.42, 0.35, 0);
+    ringA.name = 'portal-ring-a';
+    group.add(ringA);
+
+    const ringB = new THREE.Mesh(ringGeo, ringMat);
+    ringB.rotation.set(0.42, 0.35 + Math.PI / 2, 0);
+    ringB.name = 'portal-ring-b';
+    group.add(ringB);
+
+    const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.48, 0), crystalMat);
+    crystal.rotation.set(0.4, 0.2, 0.15);
+    crystal.name = 'portal-crystal';
+    group.add(crystal);
+
+    this._normalizeToOrigin(group, 1.85);
+    return group;
+  }
+
+  /**
+   * Beveled square annulus, centered.
+   * @param {number} outer
+   * @param {number} inner
+   * @param {number} depth
+   */
+  _squareRingGeometry(outer, inner, depth) {
+    const shape = new THREE.Shape();
+    shape.moveTo(-outer, -outer);
+    shape.lineTo(outer, -outer);
+    shape.lineTo(outer, outer);
+    shape.lineTo(-outer, outer);
+    shape.closePath();
+
+    const hole = new THREE.Path();
+    hole.moveTo(-inner, -inner);
+    hole.lineTo(-inner, inner);
+    hole.lineTo(inner, inner);
+    hole.lineTo(inner, -inner);
+    hole.closePath();
+    shape.holes.push(hole);
+
+    const geo = new THREE.ExtrudeGeometry(shape, {
+      depth,
+      bevelEnabled: true,
+      bevelThickness: 0.07,
+      bevelSize: 0.055,
+      bevelSegments: 2,
+      curveSegments: 1,
+    });
+    geo.center();
+    return geo;
+  }
+
+  /**
+   * Architectural GLB for Act 5 only — dark chrome, not white.
+   * @returns {Promise<THREE.Object3D | null>}
+   */
+  async _loadEmergenceGlb() {
     const loader = new GLTFLoader();
 
     try {
       const gltf = await loader.loadAsync(MODEL_PATH);
       const root = gltf.scene;
-      const material = this.createPhysicalMaterial();
+      root.name = 'nexus-emergence';
+
+      const material = this.createPhysicalMaterial(
+        {
+          color: 0x6e624f,
+          transmission: 0.12,
+          metalness: 0.72,
+          roughness: 0.24,
+          thickness: 0.45,
+          clearcoat: 0.55,
+          clearcoatRoughness: 0.2,
+          envMapIntensity: 0.95,
+          attenuationColor: new THREE.Color(0x2a2418),
+          attenuationDistance: 1.6,
+        },
+        { liquid: false },
+      );
 
       root.traverse((child) => {
         if (child.isMesh) {
@@ -137,30 +312,21 @@ export class ModelLoader {
         }
       });
 
-      this._normalizeToOrigin(root);
+      this._normalizeToOrigin(root, 3.7);
       return root;
     } catch (err) {
-      console.warn(
-        '[ModelLoader] core.glb missing or failed; using procedural sculpture.',
-        err,
-      );
-      return this._createFallbackSculpture();
+      console.warn('[ModelLoader] core.glb missing; Act 5 will reuse a darkened square.', err);
+      const twin = this._createSquareVolume();
+      twin.name = 'nexus-emergence-fallback';
+      return twin;
     }
   }
 
-  /** High-density procedural centerpiece when GLB is unavailable. */
-  _createFallbackSculpture() {
-    const geometry = new THREE.IcosahedronGeometry(3, 8);
-    const mesh = new THREE.Mesh(geometry, this.createPhysicalMaterial());
-    mesh.name = 'nexus-procedural-sculpture';
-    return mesh;
-  }
-
   /**
-   * Center the model at origin and scale so its largest axis fits ~unit radius 2.5.
    * @param {THREE.Object3D} root
+   * @param {number} [target=3.6]
    */
-  _normalizeToOrigin(root) {
+  _normalizeToOrigin(root, target = 3.6) {
     const box = new THREE.Box3().setFromObject(root);
     const size = new THREE.Vector3();
     const center = new THREE.Vector3();
@@ -171,12 +337,10 @@ export class ModelLoader {
 
     const maxDim = Math.max(size.x, size.y, size.z);
     if (maxDim > 0) {
-      const target = 5;
       root.scale.multiplyScalar(target / maxDim);
     }
   }
 
-  /** Release PMREM and environment map resources. */
   dispose() {
     if (this._envMap) {
       this._envMap.dispose();
@@ -197,5 +361,6 @@ export class ModelLoader {
       this._pmrem = null;
     }
     this.sculpture = null;
+    this.emergence = null;
   }
 }
