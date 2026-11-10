@@ -4,6 +4,8 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
+// Address-bar show/hide must not refresh the film and rescale the form
+ScrollTrigger.config({ ignoreMobileResize: true });
 
 /**
  * Film map:
