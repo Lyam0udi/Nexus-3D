@@ -172,6 +172,8 @@ const NOISE_FREQ_ACT2 = 1.2;
 const NOISE_FREQ_ACT3 = 1.28;
 const DISTORTION_SURGE = 0.01;
 const MESH_ROT_TOTAL = Math.PI * 0.08;
+/** Navbar click speed in pixels per second. This is the only knob. */
+const NAV_PX_PER_SEC = 672;
 
 /**
  * @param {import('three').PerspectiveCamera} camera
@@ -211,6 +213,10 @@ export class ScrollController {
     /** 0–1 reverse-phoenix heal */
     this.heal = 0;
     this._beats = { ...FALLBACK_BEATS };
+    /** When true, timeline tracks scroll 1:1 (navbar travel — no scrub whoosh). */
+    this._navLockstep = false;
+    /** @type {gsap.core.Tween | null} */
+    this._navTween = null;
     /** @type {Set<(progress: number, act: number, interior: number, emergence: number, heal: number) => void>} */
     this._listeners = new Set();
 
@@ -253,9 +259,41 @@ export class ScrollController {
       lerp: this._reducedMotion ? 0.35 : this._coarsePointer ? 0.18 : 0.1,
       smoothWheel: !this._reducedMotion,
       syncTouch: false,
+      // Nav travel is driven by our tween. Don't let reduced-motion turn clicks into jumps.
+      respectReducedMotion: false,
     });
 
-    this.lenis.on('scroll', ScrollTrigger.update);
+    this.lenis.on('scroll', () => {
+      ScrollTrigger.update();
+      if (this._navLockstep) this._syncFilmToScroll();
+    });
+
+    this._offNavWheel = this.lenis.on('virtual-scroll', (data) => {
+      if (!this._navTween) return;
+      const delta = Math.abs(data?.deltaY || 0) + Math.abs(data?.deltaX || 0);
+      if (delta < 0.5) return;
+      this._cancelNavTravel();
+    });
+
+    this._onNavKey = (event) => {
+      if (!this._navTween) return;
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(event.key)) {
+        this._cancelNavTravel();
+      }
+    };
+    window.addEventListener('keydown', this._onNavKey);
+  }
+
+  /** Stop navbar auto-scroll so a real user scroll can take over. */
+  _cancelNavTravel() {
+    if (!this._navTween) return;
+    this._navTween.kill();
+  }
+
+  _releaseNavTravel() {
+    this._navTween = null;
+    this._navLockstep = false;
   }
 
   _scrubAmount() {
@@ -818,22 +856,68 @@ export class ScrollController {
   raf(timeMs) {
     if (this._disposed || !this.lenis) return;
     this.lenis.raf(timeMs);
+    if (this._navLockstep) this._syncFilmToScroll();
   }
 
-  /**
-   * Snap scrubbed timeline to the live scroll progress (clears catch-up lag after nav).
-   */
-  _syncTimelineToScroll() {
+  /** @param {number} scrollY */
+  _rawProgressFromScroll(scrollY) {
     const st = this._scrollTrigger;
-    if (!st || !this.timeline) return;
-    const p = st.progress;
+    if (!st) return this.progress;
+    const start = st.start;
+    const end = st.end;
+    if (!Number.isFinite(start) || !Number.isFinite(end)) return this.progress;
+    const span = end - start;
+    if (span <= 1e-6) return 0;
+    return Math.max(0, Math.min(1, (scrollY - start) / span));
+  }
+
+  /** Keep the scrubbed film on the live scroll position (used during nav). */
+  _syncFilmToScroll(emit = false) {
+    if (!this.timeline || this._disposed) return;
+    const scroll = this.lenis?.scroll ?? window.scrollY ?? 0;
+    const p = this._rawProgressFromScroll(scroll);
+    if (!Number.isFinite(p)) return;
     this.timeline.progress(p);
-    ScrollTrigger.update();
-    this._emit(p);
+    if (emit) {
+      ScrollTrigger.update();
+      this._emit(p);
+    }
+  }
+
+  /** @param {Element} el @param {number} scrollY */
+  _absoluteTop(el, scrollY) {
+    return el.getBoundingClientRect().top + scrollY;
+  }
+
+  /** Land in Act 4 dwell — past boot, before exit. */
+  _systemDestination(scrollY, vh) {
+    const room = document.getElementById('act-4');
+    if (!room) return scrollY;
+
+    const roomTop = this._absoluteTop(room, scrollY);
+    let destination = roomTop + Math.round(vh * 0.2);
+
+    const exit = document.getElementById('act-4-exit');
+    if (exit) {
+      const exitTop = this._absoluteTop(exit, scrollY);
+      destination = Math.min(destination, exitTop - Math.round(vh * 0.65));
+    }
+
+    return Math.max(destination, roomTop + Math.round(vh * 0.08));
+  }
+
+  /** @param {number} y */
+  _setScrollY(y) {
+    const top = Math.max(0, y);
+    if (this.lenis) {
+      this.lenis.scrollTo(top, { immediate: true, force: true });
+      return;
+    }
+    window.scrollTo(0, top);
   }
 
   /**
-   * Smooth Lenis travel — slower distance curve; System settles on the card.
+   * Navbar travel at a fixed slow pace. GSAP moves scroll; Lenis only applies it.
    * @param {string | Element} target
    */
   scrollTo(target) {
@@ -847,71 +931,52 @@ export class ScrollController {
           : null;
     if (!el) return;
 
-    const header = document.getElementById('site-header');
-    const headerH = header?.offsetHeight ?? 52;
+    const headerH = document.getElementById('site-header')?.offsetHeight ?? 52;
     const id = el.id || '';
     const current = this.lenis?.scroll ?? window.scrollY ?? 0;
     const vh = window.innerHeight || 800;
     const toSystem = id === 'system-room' || id === 'act-4';
 
-    // Absolute scroll destination (System: deep into the 200vh dwell)
-    let destination;
-    if (toSystem) {
-      const room = document.getElementById('act-4') || el;
-      const top = current + room.getBoundingClientRect().top;
-      const into = Math.min(
-        Math.round(room.offsetHeight * 0.38),
-        Math.round(vh * 0.55),
-      );
-      destination = top + into;
-    } else {
-      const top = current + el.getBoundingClientRect().top;
-      const pad =
-        id === 'act-5' || id === 'coda' || id === 'contact'
-          ? headerH + 20
-          : headerH + 12;
-      destination = top - pad;
-    }
+    let destination = toSystem
+      ? this._systemDestination(current, vh)
+      : this._absoluteTop(el, current) -
+        (id === 'act-5' || id === 'coda' || id === 'contact' ? headerH + 24 : headerH + 12);
 
     destination = Math.max(0, destination);
+    if (!Number.isFinite(destination)) return;
 
-    // Cubic out — calmer than expo so the film doesn't whoosh
-    const easeCubicOut = (t) => 1 - (1 - t) ** 3;
+    this._cancelNavTravel();
 
-    if (this.lenis) {
-      const distance = Math.abs(destination - current);
-      const duration = this._reducedMotion
-        ? 0.4
-        : Math.min(3.2, Math.max(1.35, distance / 900));
-
-      this.lenis.scrollTo(destination, {
-        duration,
-        easing: easeCubicOut,
-        lock: true,
-        onComplete: () => {
-          // Let ScrollTrigger catch the final frame, then hard-sync scrub lag
-          requestAnimationFrame(() => {
-            this._syncTimelineToScroll();
-            if (toSystem) {
-              this.interior = 1;
-              this.emergence = 0;
-              this.sceneManager.setInteriorMix(1);
-              this.sceneManager.setEmergenceMix(0, 0, 0, 0);
-              this._emit(this._scrollTrigger?.progress ?? this.progress);
-            }
-          });
-        },
-      });
+    const distance = Math.abs(destination - current);
+    if (distance < 4) {
+      this._setScrollY(destination);
+      this._syncFilmToScroll(true);
       return;
     }
 
-    window.scrollTo({
-      top: destination,
-      behavior: this._reducedMotion ? 'auto' : 'smooth',
+    const duration = distance / NAV_PX_PER_SEC;
+
+    const state = { y: current };
+    this._navLockstep = true;
+
+    this._navTween = gsap.to(state, {
+      y: destination,
+      duration,
+      ease: 'none',
+      onUpdate: () => {
+        if (!this._navTween) return;
+        this._setScrollY(state.y);
+        this._syncFilmToScroll();
+      },
+      onComplete: () => {
+        this._releaseNavTravel();
+        this._setScrollY(destination);
+        this._syncFilmToScroll(true);
+      },
+      onInterrupt: () => {
+        this._releaseNavTravel();
+      },
     });
-    if (toSystem) {
-      window.setTimeout(() => this._syncTimelineToScroll(), this._reducedMotion ? 50 : 400);
-    }
   }
 
   /** @param {boolean} enabled */
@@ -923,6 +988,10 @@ export class ScrollController {
 
   destroy() {
     this._disposed = true;
+    this._cancelNavTravel();
+    this._releaseNavTravel();
+    if (this._onNavKey) window.removeEventListener('keydown', this._onNavKey);
+    if (typeof this._offNavWheel === 'function') this._offNavWheel();
     this._listeners.clear();
 
     if (this.timeline) {

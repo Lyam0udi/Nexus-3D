@@ -304,8 +304,12 @@ export class OverlayUI {
         if (!target) return;
         event.preventDefault();
         this._setNavOpen(false);
-        if (this._scrollTo) this._scrollTo(target);
-        else target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Wait for menu unlock / Lenis.start, then travel
+        requestAnimationFrame(() => {
+          if (this._disposed) return;
+          if (this._scrollTo) this._scrollTo(target);
+          else target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
       });
     });
   }
