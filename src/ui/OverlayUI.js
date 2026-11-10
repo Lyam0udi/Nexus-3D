@@ -32,7 +32,10 @@ export class OverlayUI {
       1: document.getElementById('act-1'),
       2: document.getElementById('act-2'),
       3: document.getElementById('act-3'),
+      boot: document.getElementById('act-4-boot'),
       4: document.getElementById('act-4'),
+      exit: document.getElementById('act-4-exit'),
+      fall: document.getElementById('act-5-fall'),
       5: document.getElementById('act-5'),
     };
     this._hudItems = Array.from(document.querySelectorAll('[data-hud-item]'));
@@ -42,6 +45,7 @@ export class OverlayUI {
     this._lastAct = 1;
     this._lastInterior = 0;
     this._lastEmergence = 0;
+    this._lastHeal = 0;
 
     this._initStickyHeader();
     this._initMobileNav();
@@ -52,16 +56,17 @@ export class OverlayUI {
 
     if (typeof options.onProgress === 'function') {
       this._unsubscribeProgress = options.onProgress(
-        (progress, act, interior = 0, emergence = 0) => {
+        (progress, act, interior = 0, emergence = 0, heal = 0) => {
           this._lastProgress = progress;
           this._lastAct = act;
           this._lastInterior = interior;
           this._lastEmergence = emergence;
-          this._choreograph(progress, act, interior, emergence);
+          this._lastHeal = heal;
+          this._choreograph(progress, act, interior, emergence, heal);
         },
       );
     } else {
-      this._choreograph(0, 1, 0, 0);
+      this._choreograph(0, 1, 0, 0, 0);
     }
   }
 
@@ -95,6 +100,7 @@ export class OverlayUI {
           this._lastAct,
           this._lastInterior,
           this._lastEmergence,
+          this._lastHeal,
         );
       },
     });
@@ -102,35 +108,64 @@ export class OverlayUI {
 
   /**
    * Map film progress → overlay visibility + interior / emergence modes.
+   * Boot / system / exit / fall copy follow their DOM sections so text
+   * cannot fire on the wrong runway.
    * @param {number} progress
    * @param {number} act
    * @param {number} interior 0–1
    * @param {number} emergence 0–1
+   * @param {number} heal 0–1
    */
-  _choreograph(progress, act, interior = 0, emergence = 0) {
+  _choreograph(progress, act, interior = 0, emergence = 0, heal = 0) {
     if (this._disposed) return;
 
     const interiorT = Math.max(0, Math.min(1, interior));
     const emergeT = Math.max(0, Math.min(1, emergence));
-    // Veil peels as we emerge — must not cover coda/contact
-    const veil = Math.max(0, interiorT * (1 - emergeT));
+    const healT = Math.max(0, Math.min(1, heal));
 
-    // 5-act map: core cinema → threshold hold → system → emergence
-    this._setActVisibility(1, this._band(progress, 0, 0.14, 0.18) * (1 - interiorT));
-    this._setActVisibility(2, this._band(progress, 0.2, 0.34, 0.4) * (1 - interiorT));
-    // Hold "The threshold" longer, then yield as the cross begins
+    const p1 = this._framePresence(this._acts[1]);
+    const p2 = this._framePresence(this._acts[2]);
+    const p3 = this._framePresence(this._acts[3]);
+    const pBoot = this._framePresence(this._acts.boot);
+    const pTerm = this._framePresence(this._acts[4]);
+    const pExit = this._framePresence(this._acts.exit);
+    const pFall = this._framePresence(this._acts.fall);
+    const pCore = this._framePresence(this._acts[5]);
+
+    // Section presence can unlock System UI even if scrubbed interior lags behind nav
+    const inTerminalFrame = pTerm > 0.5 && pExit < 0.4 && emergeT < 0.12;
+    const systemGate =
+      emergeT < 0.12 ? (interiorT > 0.45 || inTerminalFrame ? 1 : 0) : 0;
+
+    // Veil: optics first, but keep the room lit when the terminal owns the frame
+    const veil = Math.max(
+      0,
+      Math.max(interiorT, inTerminalFrame ? pTerm * 0.95 : 0) * (1 - emergeT),
+    );
+
+    // Later beats win so exit never shares the frame with fall copy
+    this._setActVisibility(1, p1 * (1 - p2) * (1 - Math.min(1, interiorT + pTerm)));
+    this._setActVisibility(2, p2 * (1 - p3) * (1 - Math.min(1, interiorT + pTerm)));
     this._setActVisibility(
       3,
-      this._band(progress, 0.4, 0.52, 0.6) * (1 - Math.max(0, (interiorT - 0.25) / 0.75)),
+      p3 * (1 - pBoot) * (1 - Math.max(0, (interiorT - 0.15) / 0.85)),
     );
     this._setActVisibility(
-      4,
-      this._band(progress, 0.6, 0.72, 0.8) * (1 - emergeT),
+      'boot',
+      pBoot * (1 - pTerm) * (interiorT > 0.55 && emergeT < 0.08 ? 1 : 0),
     );
-    // Stay fully readable through the end — Core nav lands at the bottom of the film
-    this._setActVisibility(5, this._band(progress, 0.78, 1.2, 1.35));
+    this._setActVisibility(4, pTerm * (1 - pExit) * systemGate);
+    this._setActVisibility(
+      'exit',
+      pExit * (1 - Math.min(1, pFall * 1.15)) * (interiorT > 0.45 && emergeT < 0.2 ? 1 : 0),
+    );
+    this._setActVisibility(
+      'fall',
+      pFall * (1 - pExit * 0.85) * (emergeT > 0.04 && emergeT < 0.8 && healT < 0.05 ? 1 : 0),
+    );
+    this._setActVisibility(5, pCore * (healT > 0.4 ? 1 : 0));
 
-    const hud = this._band(progress, 0.22, 0.34, 0.38) * (1 - interiorT);
+    const hud = p2 * (1 - Math.min(1, interiorT + pTerm));
     this._hudItems.forEach((item, index) => {
       const stagger = index * 0.035;
       const local = Math.max(0, Math.min(1, (hud - stagger) / Math.max(0.001, 1 - stagger)));
@@ -143,28 +178,42 @@ export class OverlayUI {
       this._systemInterior.style.visibility = veil < 0.04 ? 'hidden' : 'visible';
       this._systemInterior.setAttribute('aria-hidden', veil < 0.2 ? 'true' : 'false');
       this._systemInterior.classList.toggle('is-live', veil > 0.45);
+      // Deep room once fully inside — denser scan / grid
+      this._systemInterior.classList.toggle('is-deep', veil > 0.75 && emergeT < 0.1);
     }
 
     document.documentElement.dataset.act = String(act);
     document.documentElement.dataset.interior = veil > 0.45 ? '1' : '0';
     document.documentElement.dataset.emergence = emergeT > 0.45 ? '1' : '0';
+    document.documentElement.dataset.heal = healT > 0.45 ? '1' : '0';
     document.documentElement.style.setProperty('--interior', String(veil));
     document.documentElement.style.setProperty('--emergence', String(emergeT));
+    document.documentElement.style.setProperty('--heal', String(healT));
   }
 
   /**
-   * Smooth enter→hold→exit envelope.
-   * @param {number} p
-   * @param {number} enterEnd
-   * @param {number} holdEnd
-   * @param {number} exitEnd
+   * How strongly a section owns the viewport (0–1).
+   * Tall runways stay present while they cover the frame.
+   * @param {HTMLElement | null} el
    */
-  _band(p, enterEnd, holdEnd, exitEnd) {
-    if (p <= 0) return enterEnd <= 0 ? 1 : 0;
-    if (p < enterEnd) return this._smooth(p / Math.max(enterEnd, 1e-6));
-    if (p <= holdEnd) return 1;
-    if (p >= exitEnd) return 0;
-    return 1 - this._smooth((p - holdEnd) / Math.max(exitEnd - holdEnd, 1e-6));
+  _framePresence(el) {
+    if (!el) return 0;
+    const rect = el.getBoundingClientRect();
+    const vh = window.innerHeight || 1;
+    const visible = Math.min(rect.bottom, vh) - Math.max(rect.top, 0);
+    if (visible <= 0) return 0;
+
+    const cover = visible / vh;
+    // Fade in as the section claims the upper half; hold while it covers;
+    // fade out as its bottom leaves the lower third.
+    const enter = this._smooth(
+      Math.max(0, Math.min(1, (vh * 0.72 - rect.top) / Math.max(vh * 0.55, 1e-6))),
+    );
+    const leave = this._smooth(
+      Math.max(0, Math.min(1, (rect.bottom - vh * 0.28) / Math.max(vh * 0.45, 1e-6))),
+    );
+    const body = this._smooth(Math.max(0, Math.min(1, (cover - 0.22) / 0.48)));
+    return Math.min(enter, leave, Math.max(body, enter * leave));
   }
 
   /** @param {number} t */
@@ -174,7 +223,7 @@ export class OverlayUI {
   }
 
   /**
-   * @param {1|2|3|4|5} act
+   * @param {1|2|3|4|5|'fall'|'boot'|'exit'} act
    * @param {number} visibility 0–1
    */
   _setActVisibility(act, visibility) {

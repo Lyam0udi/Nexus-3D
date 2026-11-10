@@ -97,7 +97,7 @@ export class PostProcessing {
    * @param {import('three').WebGLRenderer} renderer
    * @param {import('three').Scene} scene
    * @param {import('three').Camera} camera
-   * @param {{ reducedMotion?: boolean }} [options]
+   * @param {{ reducedMotion?: boolean, lowPower?: boolean }} [options]
    */
   constructor(renderer, scene, camera, options = {}) {
     this.renderer = renderer;
@@ -105,10 +105,12 @@ export class PostProcessing {
     this.camera = camera;
     this._disposed = false;
     this._reducedMotion = Boolean(options.reducedMotion);
+    this._lowPower = Boolean(options.lowPower);
+    this._maxPixelRatio = this._lowPower ? 1.15 : 1.75;
 
     const width = window.innerWidth;
     const height = window.innerHeight;
-    const pixelRatio = Math.min(window.devicePixelRatio, 1.75);
+    const pixelRatio = Math.min(window.devicePixelRatio, this._maxPixelRatio);
 
     this.composer = new EffectComposer(renderer);
     this.composer.setPixelRatio(pixelRatio);
@@ -182,7 +184,7 @@ export class PostProcessing {
   setSize(width, height) {
     if (this._disposed) return;
 
-    const pixelRatio = Math.min(window.devicePixelRatio, 1.75);
+    const pixelRatio = Math.min(window.devicePixelRatio, this._maxPixelRatio);
     this.composer.setPixelRatio(pixelRatio);
     this.composer.setSize(width, height);
     this._syncFxaaResolution(width, height, pixelRatio);
@@ -201,11 +203,13 @@ export class PostProcessing {
    */
   setBloom(strength, threshold) {
     if (!this.bloomPass) return;
-    this.bloomPass.strength = strength;
+    // Mobile / low-power: keep bloom off unless a real surge — saves GPU during threshold
+    const scaled = this._lowPower ? strength * 0.55 : strength;
+    this.bloomPass.strength = scaled;
     if (typeof threshold === 'number') {
       this.bloomPass.threshold = threshold;
     }
-    this.bloomPass.enabled = strength > 0.07;
+    this.bloomPass.enabled = scaled > (this._lowPower ? 0.09 : 0.07);
   }
 
   /**
@@ -227,10 +231,11 @@ export class PostProcessing {
       this.setBloom(state.bloomStrength, state.bloomThreshold);
     }
     if (typeof state.chromatic === 'number') {
-      this.setDistortion(state.chromatic);
+      // Skip chromatic on coarse pointers — expensive and muddy on small screens
+      this.setDistortion(this._lowPower ? 0 : state.chromatic);
     }
     if (typeof state.focus === 'number') {
-      this.setFocus(state.focus);
+      this.setFocus(this._lowPower ? Math.min(state.focus, 0.12) : state.focus);
     }
   }
 

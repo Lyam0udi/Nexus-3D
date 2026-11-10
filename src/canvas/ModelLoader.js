@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader, RGBELoader } from 'three-stdlib';
+import { RGBELoader } from 'three-stdlib';
 import {
   applyLiquidShader,
   createLiquidUniforms,
@@ -7,33 +7,33 @@ import {
 } from './shaders/LiquidShader.js';
 
 const HDRI_PATH = '/assets/studio.hdr';
-const MODEL_PATH = '/assets/core.glb';
 
 /**
- * Dark cool glass — silhouette in the void, never chalk-white.
+ * Brand bronze glass — matches logo metal `#c8b89a`.
  * Liquid warp stays off so edges stay architectural.
  */
 const PHYSICAL_MATERIAL = {
-  color: 0x3d4652,
-  roughness: 0.12,
-  metalness: 0.28,
-  transmission: 0.62,
+  color: 0x4a4034,
+  roughness: 0.2,
+  metalness: 0.62,
+  transmission: 0.14,
   ior: 1.48,
   reflectivity: 0.9,
-  thickness: 1.1,
-  clearcoat: 0.85,
-  clearcoatRoughness: 0.14,
-  envMapIntensity: 1.15,
+  thickness: 0.55,
+  clearcoat: 0.55,
+  clearcoatRoughness: 0.18,
+  envMapIntensity: 0.85,
   transparent: true,
   side: THREE.DoubleSide,
-  attenuationColor: new THREE.Color(0x1c222c),
-  attenuationDistance: 1.6,
+  attenuationColor: new THREE.Color(0x1a1612),
+  attenuationDistance: 1.2,
 };
 
 /**
- * Dual sculptures:
- * - Square glass volume — Acts 1–3 cinema
- * - Architectural `core.glb` — Act 5 emergence only
+ * Dual sculptures (same portal DNA):
+ * - Portal rings — Acts 1–3 cinema (first paint, sync)
+ * - Portal twin — Act 5 fall → crash → heal (reverse phoenix)
+ * Warm probe is sync; real HDRI / noise enrich after first paint.
  */
 export class ModelLoader {
   /**
@@ -47,6 +47,8 @@ export class ModelLoader {
     this.sculpture = null;
     /** @type {THREE.Object3D | null} */
     this.emergence = null;
+    /** @type {THREE.Object3D | null} */
+    this.impactPlate = null;
     this._envMap = null;
     this._noiseMap = null;
     this.liquidUniforms = createLiquidUniforms();
@@ -55,24 +57,38 @@ export class ModelLoader {
   }
 
   /**
-   * @returns {Promise<{ sculpture: THREE.Object3D, emergence: THREE.Object3D | null }>}
+   * First paint: warm probe → lights → portal twin → impact plate (all sync).
+   * HDRI upgrades reflections in the background (no dark→bright pop).
+   * @returns {Promise<{ sculpture: THREE.Object3D, emergence: THREE.Object3D, impactPlate: THREE.Object3D }>}
    */
   async load() {
-    await this._loadEnvironment();
-    await this._loadLiquidNoise();
+    // Reflections available before any mesh is created
+    this._installProbeFallback();
     this._setupLights();
 
     this.sculpture = this._createSquareVolume();
     this.sculpture.position.set(0, 0, 0);
     this.scene.add(this.sculpture);
 
-    this.emergence = await this._loadEmergenceGlb();
-    if (this.emergence) {
-      this.emergence.visible = false;
-      this.scene.add(this.emergence);
-    }
+    this.emergence = this._createEmergenceVolume();
+    this.emergence.visible = false;
+    this.scene.add(this.emergence);
 
-    return { sculpture: this.sculpture, emergence: this.emergence };
+    this.impactPlate = this._createImpactPlate();
+    this.impactPlate.visible = false;
+    this.scene.add(this.impactPlate);
+
+    void this._enrichAsync();
+
+    return {
+      sculpture: this.sculpture,
+      emergence: this.emergence,
+      impactPlate: this.impactPlate,
+    };
+  }
+
+  async _enrichAsync() {
+    await Promise.allSettled([this._loadEnvironment(), this._loadLiquidNoise()]);
   }
 
   async _loadLiquidNoise() {
@@ -126,16 +142,36 @@ export class ModelLoader {
   async _loadEnvironment() {
     try {
       const texture = await new RGBELoader().loadAsync(HDRI_PATH);
+      const prev = this._envMap;
       this._envMap = this._pmrem.fromEquirectangular(texture).texture;
       texture.dispose();
       this.scene.environment = this._envMap;
       this.scene.background = new THREE.Color(0x060608);
+      this._applyEnvToMaterials();
+      if (prev && prev !== this._envMap) prev.dispose();
     } catch (err) {
-      console.warn('[ModelLoader] studio.hdr missing; using cool probe fallback.', err);
-      this._installProbeFallback();
+      console.warn('[ModelLoader] studio.hdr missing; keeping warm probe.', err);
+      if (!this._envMap) {
+        this._installProbeFallback();
+        this._applyEnvToMaterials();
+      }
     }
   }
 
+  _applyEnvToMaterials() {
+    if (!this._envMap) return;
+    const roots = [this.sculpture, this.emergence, this.impactPlate].filter(Boolean);
+    for (const root of roots) {
+      root.traverse((child) => {
+        if (child.isMesh && child.material) {
+          child.material.envMap = this._envMap;
+          child.material.needsUpdate = true;
+        }
+      });
+    }
+  }
+
+  /** Sync bronze-warm probe so metal/transmission reads on frame one. */
   _installProbeFallback() {
     const size = 64;
     const data = new Uint8Array(size * size * 4);
@@ -143,9 +179,10 @@ export class ModelLoader {
       for (let x = 0; x < size; x++) {
         const i = (y * size + x) * 4;
         const v = (x + y) / (size * 2);
-        data[i] = Math.floor(70 + v * 50);
-        data[i + 1] = Math.floor(82 + v * 48);
-        data[i + 2] = Math.floor(98 + v * 55);
+        // Warm bronze family — not cool studio blue
+        data[i] = Math.floor(110 + v * 70);
+        data[i + 1] = Math.floor(92 + v * 52);
+        data[i + 2] = Math.floor(68 + v * 38);
         data[i + 3] = 255;
       }
     }
@@ -158,22 +195,23 @@ export class ModelLoader {
   }
 
   _setupLights() {
-    const key = new THREE.DirectionalLight(0xf2ede4, 0.85);
+    // Strong enough to read the portal before HDRI enriches reflections
+    const key = new THREE.DirectionalLight(0xf2ede4, 1.15);
     key.position.set(4.5, 6, 3.5);
     key.name = 'nexus-key-light';
     this.scene.add(key);
 
-    const fill = new THREE.DirectionalLight(0xa89068, 0.35);
+    const fill = new THREE.DirectionalLight(0xa89068, 0.5);
     fill.position.set(-5, 2, -2);
     fill.name = 'nexus-fill-light';
     this.scene.add(fill);
 
-    const kick = new THREE.DirectionalLight(0xc8b89a, 0.4);
+    const kick = new THREE.DirectionalLight(0xc8b89a, 0.55);
     kick.position.set(-3, -2, 5);
     kick.name = 'nexus-kick-light';
     this.scene.add(kick);
 
-    const edge = new THREE.PointLight(0xc8b89a, 3.2, 22, 2);
+    const edge = new THREE.PointLight(0xc8b89a, 4.2, 22, 2);
     edge.position.set(3.5, 0.5, -4);
     edge.name = 'nexus-edge-light';
     this.scene.add(edge);
@@ -213,7 +251,7 @@ export class ModelLoader {
         clearcoat: 0.35,
         envMapIntensity: 0.65,
         emissive: new THREE.Color(0xc8b89a),
-        emissiveIntensity: 0.22,
+        emissiveIntensity: 0.38,
       },
       { liquid: false },
     );
@@ -274,52 +312,99 @@ export class ModelLoader {
   }
 
   /**
-   * Architectural GLB for Act 5 only — dark chrome, not white.
-   * @returns {Promise<THREE.Object3D | null>}
+   * Act 5 — identical portal twin for fall → crash → heal.
+   * Same crossed rings + crystal so the finale matches the opening.
+   * Rest local transforms are stored for shatter / reverse-phoenix.
    */
-  async _loadEmergenceGlb() {
-    const loader = new GLTFLoader();
+  _createEmergenceVolume() {
+    const group = this._createSquareVolume();
+    group.name = 'nexus-emergence';
 
-    try {
-      const gltf = await loader.loadAsync(MODEL_PATH);
-      const root = gltf.scene;
-      root.name = 'nexus-emergence';
+    const rename = {
+      'portal-ring-a': 'emergence-ring-a',
+      'portal-ring-b': 'emergence-ring-b',
+      'portal-crystal': 'emergence-crystal',
+    };
 
-      const material = this.createPhysicalMaterial(
-        {
-          color: 0x6e624f,
-          transmission: 0.12,
-          metalness: 0.72,
-          roughness: 0.24,
-          thickness: 0.45,
-          clearcoat: 0.55,
-          clearcoatRoughness: 0.2,
-          envMapIntensity: 0.95,
-          attenuationColor: new THREE.Color(0x2a2418),
-          attenuationDistance: 1.6,
-        },
-        { liquid: false },
-      );
+    group.traverse((child) => {
+      if (rename[child.name]) child.name = rename[child.name];
+      if (child.isMesh) {
+        child.userData.restPosition = child.position.clone();
+        child.userData.restRotation = child.rotation.clone();
+        child.userData.restScale = child.scale.clone();
+      }
+    });
 
-      root.traverse((child) => {
-        if (child.isMesh) {
-          if (child.material && typeof child.material.dispose === 'function') {
-            child.material.dispose();
-          }
-          child.material = material;
-          child.castShadow = false;
-          child.receiveShadow = false;
-        }
-      });
+    return group;
+  }
 
-      this._normalizeToOrigin(root, 3.7);
-      return root;
-    } catch (err) {
-      console.warn('[ModelLoader] core.glb missing; Act 5 will reuse a darkened square.', err);
-      const twin = this._createSquareVolume();
-      twin.name = 'nexus-emergence-fallback';
-      return twin;
-    }
+  /**
+   * Impact cause — dark square plate + crack rings (same DNA).
+   * Plate is the thing the portal hits; crack rings light bronze on heal.
+   */
+  _createImpactPlate() {
+    const group = new THREE.Group();
+    group.name = 'nexus-impact-plate';
+
+    const plateMat = this.createPhysicalMaterial(
+      {
+        color: 0x0c0b0a,
+        transmission: 0.01,
+        metalness: 0.4,
+        roughness: 0.62,
+        thickness: 0.25,
+        clearcoat: 0.12,
+        envMapIntensity: 0.35,
+        emissive: new THREE.Color(0xc8b89a),
+        emissiveIntensity: 0.02,
+        transparent: true,
+        opacity: 1,
+      },
+      { liquid: false },
+    );
+
+    const crackMat = this.createPhysicalMaterial(
+      {
+        color: 0x3a3228,
+        transmission: 0.08,
+        metalness: 0.7,
+        roughness: 0.28,
+        thickness: 0.2,
+        clearcoat: 0.4,
+        envMapIntensity: 0.7,
+        emissive: new THREE.Color(0xc8b89a),
+        emissiveIntensity: 0,
+        transparent: true,
+        opacity: 1,
+      },
+      { liquid: false },
+    );
+
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.09, 3.8), plateMat);
+    plate.name = 'impact-plate-body';
+    group.add(plate);
+
+    const outerCrack = new THREE.Mesh(this._squareRingGeometry(1.55, 1.28, 0.08), crackMat);
+    outerCrack.rotation.x = Math.PI / 2;
+    outerCrack.position.y = 0.08;
+    outerCrack.name = 'impact-crack-outer';
+    group.add(outerCrack);
+
+    const innerCrack = new THREE.Mesh(
+      this._squareRingGeometry(1.05, 0.82, 0.06),
+      crackMat.clone(),
+    );
+    innerCrack.rotation.x = Math.PI / 2;
+    innerCrack.position.y = 0.1;
+    innerCrack.name = 'impact-crack-inner';
+    group.add(innerCrack);
+
+    // Store materials for emissive / opacity animation
+    group.userData.plateMat = plateMat;
+    group.userData.crackMats = [crackMat, innerCrack.material];
+
+    this._normalizeToOrigin(group, 3.4);
+    return group;
   }
 
   /**
@@ -362,5 +447,6 @@ export class ModelLoader {
     }
     this.sculpture = null;
     this.emergence = null;
+    this.impactPlate = null;
   }
 }

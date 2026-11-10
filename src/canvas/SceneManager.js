@@ -11,6 +11,13 @@ const MOUSE_LERP = 0.04;
 const TILT_STRENGTH = 0.028;
 const VELOCITY_TO_DISTORTION = 0.06;
 
+/** Local shatter offsets — wide enough to read as a real break. */
+const SHATTER_OFFSETS = [
+  { p: [1.15, 0.7, 0.45], r: [0.85, 0.55, 0.65] },
+  { p: [-1.1, 0.55, -0.5], r: [-0.7, 0.8, -0.5] },
+  { p: [0.15, 1.45, 0.2], r: [1.0, 0.6, 0.4] },
+];
+
 /**
  * Production-grade WebGL renderer, camera, and delta-time animation loop.
  * Scene owns the atmosphere (obsidian void + fog); CSS does not compete.
@@ -27,6 +34,8 @@ export class SceneManager {
     this.sculpture = null;
     /** @type {import('three').Object3D | null} */
     this.emergence = null;
+    /** @type {import('three').Object3D | null} */
+    this.impactPlate = null;
     this.modelLoader = null;
     /** @type {import('../animations/ScrollController.js').ScrollController | null} */
     this.scrollController = null;
@@ -45,10 +54,22 @@ export class SceneManager {
     this.motionScale = 1;
     /** 0 = sculpture cinema, 1 = digital interior (mode shift). */
     this.interiorMix = 0;
-    /** 0 = system owns frame, 1 = same core reappears in the void. */
+    /** 0 = system owns frame, 1 = fall through crash/heal. */
     this.emergenceMix = 0;
+    /** 0–1 crash punch (squash + shatter). */
+    this.impactMix = 0;
+    /** 0–1 reverse-phoenix heal (reassemble + rise). */
+    this.healMix = 0;
+    /** 0–1 impact plate visibility (cause of the crash). */
+    this.plateMix = 0;
     this._baseSculptureScale = 1;
     this._baseEmergenceScale = 1;
+    this._baseEmergenceY = -0.85;
+    this._fallStartY = 4.2;
+    this._healY = 0.2;
+    this._plateY = -1.15;
+    /** @type {THREE.Object3D[]} */
+    this._emergenceParts = [];
 
     this._mouseTarget = new THREE.Vector2(0, 0);
     this._mouseSmooth = new THREE.Vector2(0, 0);
@@ -90,6 +111,7 @@ export class SceneManager {
 
     this.postProcessing = new PostProcessing(this.renderer, this.scene, this.camera, {
       reducedMotion: this._reducedMotion,
+      lowPower: this._lowPower,
     });
 
     this._onResize = this._onResize.bind(this);
@@ -123,17 +145,26 @@ export class SceneManager {
     this.modelLoader = new ModelLoader(this.scene, this.renderer);
 
     try {
-      const { sculpture, emergence } = await this.modelLoader.load();
+      const { sculpture, emergence, impactPlate } = await this.modelLoader.load();
       this.sculpture = sculpture;
       this.emergence = emergence;
+      this.impactPlate = impactPlate;
       this.sculpture.position.set(1.55, 0.1, 0);
       this._baseSculptureScale = this.sculpture.scale.x;
       if (this.emergence) {
-        this.emergence.position.set(1.05, -0.12, 0);
+        this.emergence.position.set(1.05, this._baseEmergenceY, 0);
         this.emergence.visible = false;
         this._baseEmergenceScale = this.emergence.scale.x;
+        this._fallStartY = this._baseEmergenceY + 5.1;
+        this._emergenceParts = this.emergence.children.filter((c) => c.isMesh);
+      }
+      if (this.impactPlate) {
+        this.impactPlate.position.set(1.05, this._plateY, 0);
+        this.impactPlate.visible = false;
       }
       this.renderer.toneMappingExposure = 0.98;
+      // Warm first draw — avoids a blank frame while shaders compile
+      this.renderer.compile(this.scene, this.camera);
     } catch (err) {
       console.error('[SceneManager] Failed to mount central sculpture.', err);
     }
@@ -199,8 +230,11 @@ export class SceneManager {
     }
 
     if (this.emergence?.visible) {
-      this.emergence.rotation.x = rotX * 0.55;
-      this.emergence.rotation.y = rotY * 0.8;
+      // Tumble while falling; calm as we heal back into the opening pose
+      const tumble = Math.max(0, this.emergenceMix * (1 - this.healMix) * (1 - this.impactMix * 0.35));
+      this.emergence.rotation.x = rotX * 0.55 * tumble + this.impactMix * 0.2;
+      this.emergence.rotation.y = rotY * (0.35 + tumble * 0.55);
+      this.emergence.rotation.z = this.impactMix * 0.08 * (1 - this.healMix);
     }
 
     this.postProcessing.render();
@@ -226,48 +260,197 @@ export class SceneManager {
   }
 
   /**
-   * Reveal the architectural GLB after the system (Act 5).
-   * @param {number} mix 0–1
+   * Act 5: fall → hit plate → broken hold → reverse-phoenix heal.
+   * @param {number} mix 0–1 sequence progress
+   * @param {number} [impact=0] 0–1 crash punch / shatter
+   * @param {number} [heal=0] 0–1 reassemble / rise
+   * @param {number} [plate=0] 0–1 impact plate presence
    */
-  setEmergenceMix(mix) {
-    const t = Math.max(0, Math.min(1, mix));
-    this.emergenceMix = t;
+  setEmergenceMix(mix, impact = 0, heal = 0, plate = 0) {
+    this.emergenceMix = Math.max(0, Math.min(1, mix));
+    this.impactMix = Math.max(0, Math.min(1, impact));
+    this.healMix = Math.max(0, Math.min(1, heal));
+    this.plateMix = Math.max(0, Math.min(1, plate));
     this._applyStageMix();
   }
 
   /**
-   * Square cinema → system owns frame → GLB in the void.
+   * Portal cinema → system → freefall → hit plate → shatter hold → heal.
    */
   _applyStageMix() {
     const interior = this.interiorMix;
     const emerge = this.emergenceMix;
+    const impact = this.impactMix;
+    const heal = this.healMix;
+    const plate = this.plateMix;
 
-    const canvasFade = Math.max(0, interior * (1 - emerge) * 0.96);
+    // Full commit inside the system — forget the sculpture completely
+    const canvasFade = Math.max(0, interior * (1 - emerge));
     if (this.canvas) {
       this.canvas.style.opacity = String(1 - canvasFade);
+      this.canvas.style.visibility = canvasFade > 0.98 ? 'hidden' : 'visible';
     }
 
     this.motionScale = Math.max(
-      0.04,
-      (1 - interior * 0.9) * (0.4 + emerge * 0.6),
+      0.02,
+      (1 - interior * 0.95) *
+        (0.35 + emerge * 0.45) *
+        (1 - impact * 0.55) *
+        (0.5 + heal * 0.5),
     );
 
     if (this.sculpture) {
-      const showSquare = interior < 0.9 && emerge < 0.2;
-      this.sculpture.visible = showSquare;
+      const showPortal = interior < 0.85 && emerge < 0.12;
+      this.sculpture.visible = showPortal;
       const base = this._baseSculptureScale || 1;
-      this.sculpture.scale.setScalar(base * (1 - Math.min(interior, 1) * 0.08));
+      this.sculpture.scale.setScalar(base * (1 - Math.min(interior, 1) * 0.12));
     }
 
+    this._applyImpactPlate(plate, impact, heal);
+
     if (this.emergence) {
-      const showGlb = emerge > 0.06;
-      this.emergence.visible = showGlb;
+      const showTwin = emerge > 0.02;
+      this.emergence.visible = showTwin;
       const base = this._baseEmergenceScale || 1;
-      this.emergence.scale.setScalar(base * (0.92 + emerge * 0.1));
+      const crashY = this._baseEmergenceY || -0.85;
+      const startY = this._fallStartY ?? crashY + 5.1;
+      const healY = this._healY ?? 0.2;
+
+      // Mostly linear drop toward the plate
+      const dropT = Math.min(1, emerge / 0.7);
+      const dropCurve = dropT * 0.7 + dropT * dropT * 0.3;
+      let y = startY + (crashY - startY) * dropCurve;
+
+      // Dig into the plate on impact; rise on heal
+      y += -0.22 * impact * (1 - heal);
+      y += (healY - crashY) * this._healRise(heal);
+
+      this.emergence.position.y = y;
+
+      // Harder squash on contact; recover through heal
+      const squash = impact * (1 - heal * 0.9);
+      const sy = 1 - squash * 0.38;
+      const sxz = 1 + squash * 0.22;
+      const size = 0.92 + emerge * 0.05 + this._healRise(heal) * 0.1;
+      this.emergence.scale.set(base * size * sxz, base * size * sy, base * size * sxz);
+
+      this._applyShatterPose(impact, heal);
+      this._applyHealGlow(heal);
     }
 
     this.renderer.toneMappingExposure =
-      0.98 - interior * 0.22 * (1 - emerge) + emerge * 0.05;
+      0.98 -
+      interior * 0.22 * (1 - emerge) +
+      emerge * 0.03 +
+      impact * 0.12 +
+      heal * 0.06;
+  }
+
+  /**
+   * Heal ease: magnet early, rise late.
+   * @param {number} heal
+   */
+  _healRise(heal) {
+    const t = Math.max(0, Math.min(1, heal));
+    // Slow magnet (0–0.45), then lift (0.45–1)
+    if (t < 0.45) return t * 0.15;
+    return 0.0675 + ((t - 0.45) / 0.55) * 0.9325;
+  }
+
+  /**
+   * Square plate fades in as the fall target, cracks light on heal, then dims.
+   * @param {number} plate
+   * @param {number} impact
+   * @param {number} heal
+   */
+  _applyImpactPlate(plate, impact, heal) {
+    if (!this.impactPlate) return;
+
+    const show = plate > 0.04;
+    this.impactPlate.visible = show;
+    if (!show) return;
+
+    this.impactPlate.position.set(1.05, this._plateY, 0);
+
+    // Presence: full through crash/broken, fades as healed portal rises
+    const presence = plate * (1 - Math.max(0, (heal - 0.55) / 0.45));
+    const scale = 0.92 + plate * 0.1 + impact * 0.04;
+    this.impactPlate.scale.setScalar(scale);
+
+    const plateMat = this.impactPlate.userData.plateMat;
+    const crackMats = this.impactPlate.userData.crackMats || [];
+
+    if (plateMat) {
+      plateMat.opacity = Math.max(0.08, presence);
+      plateMat.transparent = true;
+      // Impact flash + residual heat
+      plateMat.emissiveIntensity = 0.02 + impact * 0.35 * (1 - heal * 0.7) + heal * 0.08;
+    }
+
+    // Crack rings: dark until hit, bronze surge mid-heal, then calm
+    const crackGlow =
+      impact * 0.25 * (1 - heal) +
+      // Peak bronze around mid-heal (magnet / lock)
+      Math.sin(Math.min(1, heal) * Math.PI) * 0.85 +
+      heal * 0.15;
+    for (const mat of crackMats) {
+      if (!mat) continue;
+      mat.opacity = Math.max(0.15, presence);
+      mat.transparent = true;
+      mat.emissiveIntensity = crackGlow;
+    }
+  }
+
+  /**
+   * Crystal / rings pick up bronze life as heal progresses.
+   * @param {number} heal
+   */
+  _applyHealGlow(heal) {
+    const parts = this._emergenceParts;
+    if (!parts?.length) return;
+    const pulse = Math.sin(Math.min(1, heal) * Math.PI) * 0.35 + heal * 0.25;
+    for (const part of parts) {
+      const mat = part.material;
+      if (!mat || mat.emissiveIntensity === undefined) continue;
+      if (!part.userData.baseEmissive) {
+        part.userData.baseEmissive = mat.emissiveIntensity;
+      }
+      mat.emissiveIntensity = part.userData.baseEmissive + pulse;
+    }
+  }
+
+  /**
+   * Parts fly apart on impact, hold broken, then magnet home on heal.
+   * @param {number} impact
+   * @param {number} heal
+   */
+  _applyShatterPose(impact, heal) {
+    const parts = this._emergenceParts;
+    if (!parts?.length) return;
+
+    // Stay fully shattered while impact is high and heal hasn't started
+    // Heal 0–0.45 = magnet pull; after that parts are home
+    const magnet = Math.min(1, heal / 0.45);
+    const shatterAmt = Math.max(0, impact * (1 - magnet));
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      const restP = part.userData.restPosition;
+      const restR = part.userData.restRotation;
+      if (!restP || !restR) continue;
+
+      const off = SHATTER_OFFSETS[i] || SHATTER_OFFSETS[SHATTER_OFFSETS.length - 1];
+      part.position.set(
+        restP.x + off.p[0] * shatterAmt,
+        restP.y + off.p[1] * shatterAmt,
+        restP.z + off.p[2] * shatterAmt,
+      );
+      part.rotation.set(
+        restR.x + off.r[0] * shatterAmt,
+        restR.y + off.r[1] * shatterAmt,
+        restR.z + off.r[2] * shatterAmt,
+      );
+    }
   }
 
   /**
@@ -322,5 +505,7 @@ export class SceneManager {
     this.renderer.forceContextLoss();
     this.sculpture = null;
     this.emergence = null;
+    this.impactPlate = null;
+    this._emergenceParts = [];
   }
 }

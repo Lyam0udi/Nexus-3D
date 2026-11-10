@@ -120,7 +120,7 @@ button {
   transition: opacity 0.05s linear;
 }
 
-/* Digital interior — second experience after the threshold */
+/* Digital interior — a room you can feel, not a flat black slide */
 .system-interior {
   position: fixed;
   inset: 0;
@@ -128,21 +128,66 @@ button {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  background: #0a0908;
+}
+
+.system-interior__wash {
+  position: absolute;
+  inset: 0;
   background:
-    radial-gradient(70% 55% at 50% 42%, rgba(42, 36, 28, 0.55), transparent 62%),
-    linear-gradient(180deg, #12110f 0%, #0c0b0a 50%, #080807 100%);
+    radial-gradient(55% 48% at 50% 38%, rgba(200, 184, 154, 0.14), transparent 70%),
+    radial-gradient(80% 60% at 50% 100%, rgba(28, 24, 18, 0.9), transparent 58%),
+    linear-gradient(180deg, #141210 0%, #0e0d0b 42%, #090807 100%);
+}
+
+.system-interior__floor {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: -8%;
+  height: 48%;
+  background:
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(200, 184, 154, 0.04) 28%,
+      rgba(12, 10, 8, 0.55) 62%,
+      rgba(6, 5, 4, 0.92) 100%
+    );
+  transform: perspective(1200px) rotateX(58deg);
+  transform-origin: center top;
+  pointer-events: none;
+}
+
+.system-interior__horizon {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 58%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(200, 184, 154, 0.22) 22%,
+    rgba(200, 184, 154, 0.38) 50%,
+    rgba(200, 184, 154, 0.22) 78%,
+    transparent 100%
+  );
+  opacity: 0.55;
+  filter: blur(0.2px);
 }
 
 .system-interior__grid {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
-  -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
-  opacity: 0.35;
+    linear-gradient(rgba(200, 184, 154, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200, 184, 154, 0.055) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 42%, black 18%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 42%, black 18%, transparent 78%);
+  opacity: 0.32;
+  transition: opacity 0.6s var(--ease-out);
 }
 
 .system-interior__scan {
@@ -152,10 +197,20 @@ button {
     0deg,
     transparent,
     transparent 3px,
-    rgba(255, 255, 255, 0.012) 3px,
-    rgba(255, 255, 255, 0.012) 4px
+    rgba(255, 255, 255, 0.014) 3px,
+    rgba(255, 255, 255, 0.014) 4px
   );
-  opacity: 0.5;
+  opacity: 0.45;
+  transition: opacity 0.6s var(--ease-out);
+}
+
+.system-interior__vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(65% 55% at 50% 45%, transparent 30%, rgba(6, 5, 4, 0.55) 100%),
+    linear-gradient(90deg, rgba(6, 5, 4, 0.5) 0%, transparent 18%, transparent 82%, rgba(6, 5, 4, 0.5) 100%);
+  pointer-events: none;
 }
 
 .system-interior__rail {
@@ -170,10 +225,32 @@ button {
   color: var(--accent-soft);
   opacity: 0;
   transition: opacity 0.4s var(--ease-out);
+  text-shadow: 0 1px 12px rgba(6, 5, 4, 0.8);
 }
 
 .system-interior.is-live .system-interior__rail {
-  opacity: 0.45;
+  opacity: 0.62;
+}
+
+.system-interior.is-live .system-interior__grid {
+  opacity: 0.48;
+}
+
+.system-interior.is-live .system-interior__horizon {
+  opacity: 0.7;
+}
+
+.system-interior.is-deep .system-interior__scan {
+  opacity: 0.72;
+}
+
+.system-interior.is-deep .system-interior__wash {
+  animation: system-breathe 7.5s var(--ease-out) infinite;
+}
+
+.system-interior.is-deep .system-interior__grid {
+  opacity: 0.58;
+  animation: system-grid-drift 14s linear infinite;
 }
 
 .system-interior__rail--left {
@@ -183,6 +260,32 @@ button {
 .system-interior__rail--right {
   right: var(--page-pad-x);
   text-align: right;
+}
+
+@keyframes system-breathe {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.08);
+  }
+}
+
+@keyframes system-grid-drift {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 52px 52px, 52px 52px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .system-interior.is-deep .system-interior__wash,
+  .system-interior.is-deep .system-interior__grid {
+    animation: none;
+  }
 }
 
 #app {
@@ -472,10 +575,10 @@ html[data-interior="1"] .site-header::before {
 
 .act-scrim--terminal {
   background: radial-gradient(
-    90% 70% at 50% 60%,
-    rgba(6, 6, 8, 0.28) 0%,
-    rgba(6, 6, 8, 0.78) 68%,
-    rgba(6, 6, 8, 0.92) 100%
+    62% 48% at 50% 46%,
+    rgba(6, 6, 8, 0.5) 0%,
+    rgba(6, 6, 8, 0.22) 55%,
+    transparent 100%
   );
 }
 
@@ -643,13 +746,23 @@ html[data-interior="1"] .site-header::before {
 .dive-whisper {
   position: relative;
   font-family: var(--font-display);
-  font-size: clamp(1.15rem, 3.2vw, 1.65rem);
-  font-weight: 600;
-  letter-spacing: 0.18em;
+  font-size: clamp(1.35rem, 3.8vw, 2rem);
+  font-weight: 650;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.94);
   text-shadow: var(--type-shadow);
-  padding: 1.25rem 1.5rem 0.35rem;
+  padding: 1.35rem 1.6rem 0.4rem;
+}
+
+/* System voice: mono whisper for boot / terminal status lines */
+.dive-whisper--mono {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: clamp(1.05rem, 2.8vw, 1.45rem);
+  letter-spacing: 0.12em;
+  text-transform: none;
+  color: var(--accent);
 }
 
 .dive-whisper::before {
@@ -667,43 +780,82 @@ html[data-interior="1"] .site-header::before {
 }
 
 .dive-sub {
-  margin-top: 0.35rem;
-  font-size: 0.62rem;
-  letter-spacing: 0.28em;
+  margin-top: 0.55rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--accent-soft);
   text-shadow: 0 1px 12px rgba(6, 6, 8, 0.9);
 }
 
+.act-scrim--terminal {
+  display: block;
+  /* Soft plate under the card — room atmosphere stays visible */
+  background: radial-gradient(
+    62% 48% at 50% 46%,
+    rgba(6, 6, 8, 0.55) 0%,
+    rgba(6, 6, 8, 0.28) 55%,
+    transparent 100%
+  );
+}
+
+#system-room {
+  scroll-margin-top: calc(var(--header-h) + 18vh);
+}
+
+/* Act 4a — Liminal boot (sculpture gone, system owns the void) */
+.act--boot {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  /* Match boot + exit runway so neither fights the fall beat */
+  min-height: 130vh;
+  min-height: 130dvh;
+}
+
+/* Keep liminal whispers in frame for the whole boot/exit runway */
+.act--boot .act__inner--dive {
+  position: sticky;
+  top: 36vh;
+  flex: 0 0 auto;
+  justify-content: flex-start;
+  min-height: 0;
+  padding-block: 0.25rem 2rem;
+}
+
+#act-4-boot,
+#act-4-exit {
+  scroll-margin-top: var(--header-h);
+}
+
+/* Act 4b — Terminal dwell — long enough to breathe before the fall */
 .act--terminal {
   position: relative;
   z-index: 2;
   background: transparent;
+  min-height: 200vh;
+  min-height: 200dvh;
 }
 
-.act-scrim--terminal {
-  display: block;
-  background: radial-gradient(
-    70% 55% at 50% 48%,
-    rgba(6, 6, 8, 0.82) 0%,
-    rgba(6, 6, 8, 0.55) 55%,
-    rgba(6, 6, 8, 0.2) 100%
-  );
-}
-
-/* Act 4 — Terminal arrival */
 .act__inner--terminal {
   align-items: center;
   text-align: center;
   max-width: 38rem;
   padding: 2.25rem 1.25rem;
+  /* Stick the card in the long runway so dwell feels like a room */
+  position: sticky;
+  top: 28vh;
+}
+
+#act-4 {
+  scroll-margin-top: var(--header-h);
 }
 
 .terminal-card {
   position: relative;
   z-index: 2;
   width: 100%;
-  padding: 2.25rem 1.75rem 1.75rem;
+  padding: 2.5rem 1.85rem 1.85rem;
   background: #141210;
   border: 1px solid rgba(200, 184, 154, 0.45);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
@@ -714,18 +866,19 @@ html[data-interior="1"] .site-header::before {
   letter-spacing: 0.26em;
   text-transform: uppercase;
   color: var(--accent);
-  margin-bottom: 0.9rem;
+  margin-bottom: 1rem;
 }
 
 .terminal-headline {
   font-family: var(--font-display);
-  font-size: clamp(2.1rem, 5vw, 3.2rem);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
+  font-size: clamp(2.2rem, 5.2vw, 3.35rem);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
   text-transform: none;
   color: #ffffff;
   -webkit-text-fill-color: #ffffff;
+  margin-bottom: 0.85rem;
 }
 
 .terminal-lede {
@@ -770,7 +923,30 @@ html[data-interior="1"] .site-header::before {
   text-align: left;
 }
 
-/* Act 5 — Emergence into the void */
+/* Act 5a — Fall runway (extra scroll so the drop can be felt) */
+.act--fall {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  /* Long runway so freefall can be felt before impact */
+  min-height: 260vh;
+  min-height: 260dvh;
+}
+
+.act--fall .act__inner--dive {
+  position: sticky;
+  top: 34vh;
+  flex: 0 0 auto;
+  justify-content: flex-start;
+  min-height: 0;
+  padding-block: 0.25rem 2rem;
+}
+
+#act-5-fall {
+  scroll-margin-top: var(--header-h);
+}
+
+/* Act 5b — Aftermath card after impact */
 .act--emergence {
   position: relative;
   z-index: 2;
