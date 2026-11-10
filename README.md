@@ -127,7 +127,7 @@ Scrub `#film`. FAQ and contact live in `#coda` after the film. Exact % shift wit
 | 2 Orbit | `#act-2` | Sculpture cinema + HUD |
 | 3 Threshold | `#act-3` | Hold, then cross into the system (not a zoom crash) |
 | 4a Boot | `#act-4-boot` | System void; square gone |
-| 4b Dwell | `#act-4` | Long room; terminal card; sculpture fully gone |
+| 4b Dwell | `#act-4` | System room; terminal card between matching boot/exit hinges |
 | 4c Exit | `#act-4-exit` | Liminal unlock before the drop |
 | 5a Fall | `#act-5-fall` | Freefall toward the plate |
 | 5b Core | `#act-5` | Hit → broken hold → bronze heal; card after lock |

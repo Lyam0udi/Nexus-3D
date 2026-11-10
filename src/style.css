@@ -808,33 +808,33 @@ html[data-interior="1"] .site-header::before {
   position: relative;
   z-index: 1;
   background: transparent;
-  /* Match boot + exit runway so neither fights the fall beat */
-  min-height: 130vh;
-  min-height: 130dvh;
+}
+
+/* Boot / exit: matching hinges around the System card (closer, symmetric) */
+#act-4-boot,
+#act-4-exit {
+  min-height: 70vh;
+  min-height: 70dvh;
+  scroll-margin-top: var(--header-h);
 }
 
 /* Keep liminal whispers in frame for the whole boot/exit runway */
 .act--boot .act__inner--dive {
   position: sticky;
-  top: 36vh;
+  top: 38vh;
   flex: 0 0 auto;
   justify-content: flex-start;
   min-height: 0;
-  padding-block: 0.25rem 2rem;
+  padding-block: 0.25rem 1.5rem;
 }
 
-#act-4-boot,
-#act-4-exit {
-  scroll-margin-top: var(--header-h);
-}
-
-/* Act 4b — Terminal dwell — long enough to breathe before the fall */
+/* Act 4b — Terminal dwell — breathe, but not a long void between hinges */
 .act--terminal {
   position: relative;
   z-index: 2;
   background: transparent;
-  min-height: 200vh;
-  min-height: 200dvh;
+  min-height: 120vh;
+  min-height: 120dvh;
 }
 
 .act__inner--terminal {
@@ -842,9 +842,9 @@ html[data-interior="1"] .site-header::before {
   text-align: center;
   max-width: 38rem;
   padding: 2.25rem 1.25rem;
-  /* Stick the card in the long runway so dwell feels like a room */
+  /* Stick the card so the room holds without a huge empty runway */
   position: sticky;
-  top: 28vh;
+  top: 26vh;
 }
 
 #act-4 {
