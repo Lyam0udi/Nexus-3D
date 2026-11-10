@@ -47,6 +47,7 @@ export class OverlayUI {
     this._lastEmergence = 0;
     this._lastHeal = 0;
 
+    this._toTop = document.getElementById('to-top');
     this._initStickyHeader();
     this._initMobileNav();
     this._initSmoothAnchors();
@@ -253,6 +254,9 @@ export class OverlayUI {
     const onScroll = () => {
       const scrolled = window.scrollY > 8;
       this._header.classList.toggle('is-scrolled', scrolled);
+      const showTop = window.scrollY > window.innerHeight * 0.85;
+      this._toTop?.classList.toggle('is-on', showTop);
+      this._toTop?.setAttribute('aria-hidden', showTop ? 'false' : 'true');
     };
 
     onScroll();

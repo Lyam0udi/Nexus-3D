@@ -104,7 +104,9 @@ export class SceneManager {
     this.renderer.setClearColor(0x060608, 1);
     // Cap PR so EffectComposer bloom buffers stay stable (high PR + bloom = edge glitter)
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this._lowPower ? 1.25 : 1.75));
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this._viewW = window.innerWidth;
+    this._viewH = window.innerHeight;
+    this.renderer.setSize(this._viewW, this._viewH, false);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 0.98;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -173,12 +175,16 @@ export class SceneManager {
   _onResize() {
     const width = window.innerWidth;
     const height = window.innerHeight;
+    // Mobile toolbar show/hide fires resize with the same width. Ignore it.
+    if (this._viewW === width && Math.abs(height - this._viewH) < 160) return;
+    this._viewW = width;
+    this._viewH = height;
 
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
 
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this._lowPower ? 1.25 : 1.75));
-    this.renderer.setSize(width, height);
+    this.renderer.setSize(width, height, false);
     this.postProcessing?.setSize(width, height);
   }
 

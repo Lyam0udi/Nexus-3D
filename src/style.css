@@ -513,11 +513,39 @@ html[data-interior="1"] .site-header::before {
   transform: translateY(-3.25px) rotate(-45deg);
 }
 
+/* Back to the opening — same nav travel as the header links */
+.to-top {
+  position: fixed;
+  right: max(1rem, var(--page-pad-x));
+  bottom: 1.25rem;
+  z-index: 30;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(200, 184, 154, 0.5);
+  background: rgba(12, 10, 8, 0.88);
+  color: var(--accent);
+  font-size: 1.05rem;
+  line-height: 1;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease-out), visibility 0.3s var(--ease-out);
+}
+
+.to-top.is-on {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
 /* ── Acts ─────────────────────────────────── */
 .act {
   position: relative;
   min-height: 100vh;
-  min-height: 100dvh;
+  /* svh stays put when the mobile toolbar shows or hides */
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   padding: calc(var(--header-h) + 1rem) var(--page-pad-x) 1.5rem;
@@ -814,7 +842,7 @@ html[data-interior="1"] .site-header::before {
 #act-4-boot,
 #act-4-exit {
   min-height: 70vh;
-  min-height: 70dvh;
+  min-height: 70svh;
   scroll-margin-top: var(--header-h);
 }
 
@@ -834,7 +862,7 @@ html[data-interior="1"] .site-header::before {
   z-index: 2;
   background: transparent;
   min-height: 120vh;
-  min-height: 120dvh;
+  min-height: 120svh;
 }
 
 .act__inner--terminal {
@@ -930,7 +958,7 @@ html[data-interior="1"] .site-header::before {
   background: transparent;
   /* Long runway so freefall can be felt before impact */
   min-height: 260vh;
-  min-height: 260dvh;
+  min-height: 260svh;
 }
 
 .act--fall .act__inner--dive {
@@ -1347,7 +1375,7 @@ html[data-interior="1"] .site-header::before {
     inset: 0;
     width: 100%;
     height: 100vh;
-    height: 100dvh;
+    height: 100svh;
     margin: 0;
     flex-direction: column;
     align-items: center;
